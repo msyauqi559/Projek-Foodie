@@ -1,0 +1,909 @@
+import 'package:flutter/material.dart';
+
+import '../constants/app_assets.dart';
+import '../constants/app_colors.dart';
+import '../constants/app_dimensions.dart';
+import '../constants/app_spacing.dart';
+import '../models/food_item.dart';
+import '../services/app_navigation.dart';
+import '../services/database_helper.dart';
+import '../utils/formatters.dart';
+import '../utils/responsive.dart';
+import '../widgets/app_text_field.dart';
+import '../widgets/figma_page_body.dart';
+import '../widgets/home_brand_header.dart';
+import '../widgets/notification_button.dart';
+import '../widgets/notification_empty_sheet.dart';
+import '../widgets/reusable_image.dart';
+import '../widgets/section_header.dart';
+
+/// HomePage — Halaman utama aplikasi Foodie.
+///
+/// Sekarang mengambil data menu dari **SQLite** via [DatabaseHelper],
+/// bukan lagi dari DummyDataService.
+///
+/// Menggunakan [StatefulWidget] + [FutureBuilder] untuk:
+/// 1. Memanggil [DatabaseHelper.instance.getAllMenus()] saat halaman dimuat
+/// 2. Menampilkan loading indicator saat data belum siap
+/// 3. Menampilkan data menu saat sudah tersedia
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  /// Future yang menyimpan hasil query database.
+  /// Dipanggil sekali di [initState], atau di-refresh saat diperlukan.
+  late Future<List<FoodItem>> _menusFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMenus();
+  }
+
+  /// Memuat data menu dari SQLite.
+  void _loadMenus() {
+    _menusFuture = DatabaseHelper.instance.getAllMenus();
+  }
+
+  /// Refresh data — dipanggil setelah kembali dari halaman manage menu.
+  void refreshData() {
+    setState(() {
+      _loadMenus();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<FoodItem>>(
+      future: _menusFuture,
+      builder: (context, snapshot) {
+        // ── State 1: Loading ──
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
+        }
+
+        // ── State 2: Error ──
+        if (snapshot.hasError) {
+          return Center(
+            child: Text('Error: ${snapshot.error}'),
+          );
+        }
+
+        // ── State 3: Data Ready ──
+        final List<FoodItem> allMenus = snapshot.data ?? [];
+
+        // Ambil 3 menu pertama untuk tampilan highlight
+        final List<FoodItem> highlightMenus = allMenus.take(3).toList();
+
+        // Kelompokkan menu berdasarkan kategori untuk section cards
+        final Map<String, List<FoodItem>> grouped = {};
+        for (final menu in allMenus) {
+          grouped.putIfAbsent(menu.category, () => []).add(menu);
+        }
+
+        // Menu Salad untuk promo banner (cari yang kategori Sehat)
+        final FoodItem? promoFood = allMenus.where(
+          (m) => m.name.toLowerCase().contains('salad'),
+        ).firstOrNull;
+
+        return FigmaPageBody(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header: Logo + Notifikasi ──
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(child: HomeBrandHeader()),
+                  NotificationButton(
+                    onTap: () => NotificationEmptySheet.show(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // ── Search Bar ──
+              const AppTextField(
+                hintText: 'Cari menu....',
+                prefixIcon: Icons.search_rounded,
+                borderColor: AppColors.primary,
+                borderRadius: AppDimensions.homeSearchRadius,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 16,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              // ── Promo Banner ──
+              if (promoFood != null)
+                _PromoBanner(
+                  onTap: () => AppNavigation.openFoodDetail(context, promoFood),
+                ),
+              if (promoFood != null) const SizedBox(height: AppSpacing.lg),
+
+              // ── Quick Stats Row ──
+              _QuickStatsRow(menuCount: allMenus.length),
+              const SizedBox(height: AppSpacing.lg),
+
+              // ── Divider ──
+              Container(
+                width: double.infinity,
+                height: 1,
+                color: AppColors.divider,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // ── Section: Menu Populer (Horizontal Scroll) ──
+              const SectionHeader(title: '🔥 Menu Populer'),
+              const SizedBox(height: AppSpacing.sm),
+              SizedBox(
+                height: 225,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.zero,
+                  itemCount: allMenus.length > 5 ? 5 : allMenus.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppSpacing.sm),
+                  itemBuilder: (context, index) {
+                    final food = allMenus[index];
+                    return _PopularMenuCard(
+                      food: food,
+                      onTap: () =>
+                          AppNavigation.openFoodDetail(context, food),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              // ── Section: Highlights dengan detail cards ──
+              const SectionHeader(title: '⭐ Pilihan Hari Ini'),
+              const SizedBox(height: AppSpacing.sm),
+              ...List.generate(
+                highlightMenus.length,
+                (index) => Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == highlightMenus.length - 1
+                        ? 0
+                        : AppSpacing.md,
+                  ),
+                  child: _HighlightFoodCard(
+                    food: highlightMenus[index],
+                    rank: index + 1,
+                    onDetailTap: () {
+                      AppNavigation.openFoodDetail(
+                        context,
+                        highlightMenus[index],
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              // ── Section: Per Kategori ──
+              ...grouped.entries.map((entry) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _CategoryHeader(
+                        category: entry.key,
+                        count: entry.value.length,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      SizedBox(
+                        height: 120,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: EdgeInsets.zero,
+                          itemCount: entry.value.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: AppSpacing.sm),
+                          itemBuilder: (context, i) {
+                            final food = entry.value[i];
+                            return _MiniMenuCard(
+                              food: food,
+                              onTap: () => AppNavigation.openFoodDetail(
+                                context,
+                                food,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// WIDGET: Quick Stats Row
+// ══════════════════════════════════════════════════════════
+
+class _QuickStatsRow extends StatelessWidget {
+  const _QuickStatsRow({required this.menuCount});
+
+  final int menuCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatChip(
+            icon: Icons.restaurant_menu_rounded,
+            label: '$menuCount Menu',
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        const Expanded(
+          child: _StatChip(
+            icon: Icons.local_shipping_rounded,
+            label: 'Gratis Ongkir',
+            color: AppColors.success,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        const Expanded(
+          child: _StatChip(
+            icon: Icons.star_rounded,
+            label: 'Rating 4.8+',
+            color: AppColors.warning,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// WIDGET: Popular Menu Card (Horizontal)
+// ══════════════════════════════════════════════════════════
+
+class _PopularMenuCard extends StatelessWidget {
+  const _PopularMenuCard({
+    required this.food,
+    required this.onTap,
+  });
+
+  final FoodItem food;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 155,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 14,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Gambar dengan badge rating
+            Stack(
+              children: [
+                ReusableImage(
+                  imagePath: food.imagePath,
+                  width: double.infinity,
+                  height: 115,
+                  borderRadius: 12,
+                ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.dark.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: AppColors.warning,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          food.rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              food.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const Spacer(),
+            // Harga + Waktu kirim
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    PriceFormatter.toRupiah(food.price),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                  ),
+                ),
+                Icon(
+                  Icons.access_time_rounded,
+                  size: 11,
+                  color: AppColors.grayText,
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  food.deliveryTime,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
+                        color: AppColors.grayText,
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// WIDGET: Highlight Food Card (Vertical List)
+// ══════════════════════════════════════════════════════════
+
+class _HighlightFoodCard extends StatelessWidget {
+  const _HighlightFoodCard({
+    required this.food,
+    required this.rank,
+    required this.onDetailTap,
+  });
+
+  final FoodItem food;
+  final int rank;
+  final VoidCallback onDetailTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border:
+            Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.6)),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Gambar dengan badge ranking
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ReusableImage(
+                imagePath: food.imagePath,
+                width: 150,
+                height: 130,
+                borderRadius: 12,
+              ),
+              Positioned(
+                top: -6,
+                left: -6,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withValues(alpha: 0.8),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      '#$rank',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  food.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 15,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                // Tags
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: food.tags.take(2).map((tag) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.promoCream,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        tag,
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontSize: 9,
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2),
+                      child: Icon(
+                        Icons.location_on_outlined,
+                        size: 15,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Expanded(
+                      child: Text(
+                        food.address,
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontSize: 10.5,
+                                  color: AppColors.textPrimary,
+                                ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Harga
+                    Text(
+                      PriceFormatter.toRupiah(food.price),
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppColors.primary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                    ),
+                    // Tombol Detail
+                    SizedBox(
+                      width: 76,
+                      height: 32,
+                      child: ElevatedButton(
+                        onPressed: onDetailTap,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.card,
+                          elevation: 0,
+                          minimumSize: const Size(76, 32),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Detail',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// WIDGET: Category Header
+// ══════════════════════════════════════════════════════════
+
+class _CategoryHeader extends StatelessWidget {
+  const _CategoryHeader({
+    required this.category,
+    required this.count,
+  });
+
+  final String category;
+  final int count;
+
+  IconData get _icon {
+    switch (category) {
+      case 'Nusantara':
+        return Icons.ramen_dining_rounded;
+      case 'Sehat':
+        return Icons.eco_rounded;
+      case 'Fastfood':
+        return Icons.local_cafe_rounded;
+      default:
+        return Icons.restaurant_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(_icon, size: 18, color: AppColors.primary),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          category,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.muted,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            '$count item',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// WIDGET: Mini Menu Card (Horizontal Category Row)
+// ══════════════════════════════════════════════════════════
+
+class _MiniMenuCard extends StatelessWidget {
+  const _MiniMenuCard({
+    required this.food,
+    required this.onTap,
+  });
+
+  final FoodItem food;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 200,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ReusableImage(
+              imagePath: food.imagePath,
+              width: 80,
+              height: 90,
+              borderRadius: 10,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    food.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    PriceFormatter.toRupiah(food.price),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        color: AppColors.warning,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        food.rating.toStringAsFixed(1),
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontSize: 10,
+                                  color: AppColors.grayText,
+                                ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 11,
+                        color: AppColors.grayText,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        food.deliveryTime,
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontSize: 10,
+                                  color: AppColors.grayText,
+                                ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// WIDGET: Promo Banner (unchanged from original)
+// ══════════════════════════════════════════════════════════
+
+class _PromoBanner extends StatelessWidget {
+  const _PromoBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: AppDimensions.promoBannerHeight,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.promoBanner,
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 18,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: ReusableImage(
+                  imagePath: AppAssets.salad,
+                  width: Responsive.value(context, mobile: 220, tablet: 260),
+                  height: Responsive.value(context, mobile: 180, tablet: 200),
+                  fit: BoxFit.contain,
+                  borderRadius: 0,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double textWidth = constraints.maxWidth * 0.52;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: textWidth.clamp(170, 230),
+                          child: Text(
+                            'Energi alami\ndalam satu\nmangkuk\nSalad',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  fontSize: 20,
+                                  height: 1.45,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                        const Spacer(),
+                        SizedBox(
+                          width: 134,
+                          height: 32,
+                          child: ElevatedButton(
+                            onPressed: onTap,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.card,
+                              elevation: 0,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                            child: const Text(
+                              'Beli!',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

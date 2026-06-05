@@ -1,16 +1,8 @@
-# foodie_1
+# Foodie App
 
-A new Flutter project.
+Aplikasi mobile berbasis Flutter bernama **Foodie** yang dibuat untuk memenuhi tugas magang Pre-Mini. Aplikasi ini dirancang untuk menampilkan katalog menu kuliner dan mengelola transaksi data secara lokal menggunakan database **SQLite**.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Fitur Utama
+- Katalog Menu Makanan & Minuman
+- Manajemen CRUD Data Menu (Tabel Master)
+- Riwayat Pesanan & Keranjang (Tabel Transaksi)

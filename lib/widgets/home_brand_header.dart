@@ -15,8 +15,8 @@ class HomeBrandHeader extends StatelessWidget {
       children: [
         const ReusableImage(
           imagePath: AppAssets.logo,
-          width: 70,
-          height: 70,
+          width: 85,
+          height: 85,
           fit: BoxFit.contain,
           borderRadius: 0,
         ),

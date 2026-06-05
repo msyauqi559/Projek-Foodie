@@ -66,6 +66,11 @@ class _AuthPageState extends State<AuthPage> {
       return;
     }
 
+    if (email == 'admin@gmail.com' && password == 'admin123') {
+      AppNavigation.openAdmin(context);
+      return;
+    }
+
     if (isLogin) {
       AppNavigation.onLoginSuccess(context);
       return;
@@ -96,8 +101,8 @@ class _AuthPageState extends State<AuthPage> {
                   const SizedBox(height: 20),
                   const ReusableImage(
                     imagePath: AppAssets.logo,
-                    width: 120,
-                    height: 120,
+                    width: 180,
+                    height: 180,
                     fit: BoxFit.contain,
                     borderRadius: 0,
                   ),

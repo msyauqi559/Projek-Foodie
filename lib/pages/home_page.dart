@@ -477,8 +477,8 @@ class _HighlightFoodCard extends StatelessWidget {
             children: [
               ReusableImage(
                 imagePath: food.imagePath,
-                width: 150,
-                height: 130,
+                width: 110,
+                height: 110,
                 borderRadius: 12,
               ),
               Positioned(
@@ -584,21 +584,23 @@ class _HighlightFoodCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Harga
-                    Text(
-                      PriceFormatter.toRupiah(food.price),
-                      style:
-                          Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: AppColors.primary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
+                    Expanded(
+                      child: Text(
+                        PriceFormatter.toRupiah(food.price),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: AppColors.primary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
                     ),
+                    const SizedBox(width: 6),
                     // Tombol Detail
                     SizedBox(
-                      width: 76,
+                      width: 72,
                       height: 32,
                       child: ElevatedButton(
                         onPressed: onDetailTap,
@@ -606,7 +608,7 @@ class _HighlightFoodCard extends StatelessWidget {
                           backgroundColor: AppColors.primary,
                           foregroundColor: AppColors.card,
                           elevation: 0,
-                          minimumSize: const Size(76, 32),
+                          minimumSize: const Size(72, 32),
                           padding:
                               const EdgeInsets.symmetric(horizontal: 8),
                           shape: RoundedRectangleBorder(
@@ -616,7 +618,7 @@ class _HighlightFoodCard extends StatelessWidget {
                         child: const Text(
                           'Detail',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

@@ -6,6 +6,7 @@ import '../models/category_item.dart';
 import '../models/food_item.dart';
 import '../services/app_navigation.dart';
 import '../services/dummy_data_service.dart';
+import '../services/database_helper.dart';
 import '../constants/app_dimensions.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/category_food_card.dart';
@@ -23,11 +24,19 @@ class CategoryPage extends StatefulWidget {
 
 class _CategoryPageState extends State<CategoryPage> {
   late String selectedCategory;
+  late Future<List<FoodItem>> _menusFuture;
 
   @override
   void initState() {
     super.initState();
     selectedCategory = widget.initialCategory ?? 'Semua';
+    _loadMenus();
+  }
+
+  void _loadMenus() {
+    setState(() {
+      _menusFuture = DatabaseHelper.instance.getAllMenus();
+    });
   }
 
   @override
@@ -60,25 +69,61 @@ class _CategoryPageState extends State<CategoryPage> {
             onSelected: (label) => setState(() => selectedCategory = label),
           ),
           const SizedBox(height: AppSpacing.xl),
-          if (selectedCategory == 'Semua' || selectedCategory == 'Nusantara')
-            _FoodSection(
-              title: 'Nusantara',
-              foods: DummyDataService.nusantaraFoods,
-            ),
-          if (selectedCategory == 'Semua' || selectedCategory == 'Sehat') ...[
-            const SizedBox(height: AppSpacing.xl),
-            _FoodSection(
-              title: 'Makanan Sehat',
-              foods: DummyDataService.healthyFoods,
-            ),
-          ],
-          if (selectedCategory == 'Semua' || selectedCategory == 'Fastfood') ...[
-            const SizedBox(height: AppSpacing.xl),
-            _FoodSection(
-              title: 'Makanan Cepat Saji',
-              foods: DummyDataService.fastFoods,
-            ),
-          ],
+          
+          FutureBuilder<List<FoodItem>>(
+            future: _menusFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+                );
+              }
+
+              final allMenus = snapshot.data ?? [];
+              
+              // Filter data berdasarkan SQLite records
+              final nusantaraFoods = allMenus.where((m) => m.category == 'Nusantara').toList();
+              final healthyFoods = allMenus.where((m) => m.category == 'Sehat').toList();
+              final fastFoods = allMenus.where((m) => m.category == 'Fastfood').toList();
+
+              return Column(
+                children: [
+                  if ((selectedCategory == 'Semua' || selectedCategory == 'Nusantara') && nusantaraFoods.isNotEmpty)
+                    _FoodSection(
+                      title: 'Nusantara',
+                      foods: nusantaraFoods,
+                    ),
+                  if ((selectedCategory == 'Semua' || selectedCategory == 'Sehat') && healthyFoods.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    _FoodSection(
+                      title: 'Makanan Sehat',
+                      foods: healthyFoods,
+                    ),
+                  ],
+                  if ((selectedCategory == 'Semua' || selectedCategory == 'Fastfood') && fastFoods.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    _FoodSection(
+                      title: 'Makanan Cepat Saji',
+                      foods: fastFoods,
+                    ),
+                  ],
+                  
+                  // Empty state jika kategori kosong
+                  if (selectedCategory != 'Semua' && 
+                      ((selectedCategory == 'Nusantara' && nusantaraFoods.isEmpty) ||
+                       (selectedCategory == 'Sehat' && healthyFoods.isEmpty) ||
+                       (selectedCategory == 'Fastfood' && fastFoods.isEmpty)))
+                    const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Text('Belum ada menu di kategori ini.'),
+                    ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );

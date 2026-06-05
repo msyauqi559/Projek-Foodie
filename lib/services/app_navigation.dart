@@ -33,6 +33,10 @@ class AppNavigation {
     Navigator.pushReplacementNamed(context, AppRoutes.shell);
   }
 
+  static void openAdmin(BuildContext context) {
+    Navigator.pushReplacementNamed(context, AppRoutes.admin);
+  }
+
   static void onLogout(BuildContext context) {
     Navigator.pushNamedAndRemoveUntil(
       context,

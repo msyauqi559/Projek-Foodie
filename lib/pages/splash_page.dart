@@ -34,8 +34,8 @@ class _SplashPageState extends State<SplashPage> {
       body: const Center(
         child: ReusableImage(
           imagePath: AppAssets.splashLogo,
-          width: 200,
-          height: 200,
+          width: 280,
+          height: 280,
           fit: BoxFit.contain,
           borderRadius: 0,
         ),

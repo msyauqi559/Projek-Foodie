@@ -9,6 +9,8 @@ import '../pages/main_shell_page.dart';
 import '../pages/order_detail_page.dart';
 import '../pages/order_tracking_page.dart';
 import '../pages/splash_page.dart';
+import '../pages/admin_dashboard_page.dart';
+import '../pages/admin_menu_form_page.dart';
 
 class AppRoutes {
   const AppRoutes._();
@@ -20,6 +22,8 @@ class AppRoutes {
   static const String cart = '/cart';
   static const String tracking = '/tracking';
   static const String orderDetail = '/order-detail';
+  static const String admin = '/admin';
+  static const String adminForm = '/admin-form';
 }
 
 class AppRouter {
@@ -47,6 +51,11 @@ class AppRouter {
       case AppRoutes.orderDetail:
         final OrderHistoryItem order = settings.arguments! as OrderHistoryItem;
         return _slideRoute(OrderDetailPage(order: order), settings);
+      case AppRoutes.admin:
+        return _fadeRoute(const AdminDashboardPage(), settings);
+      case AppRoutes.adminForm:
+        final FoodItem? food = settings.arguments as FoodItem?;
+        return _slideRoute(AdminMenuFormPage(foodToEdit: food), settings);
       default:
         return _fadeRoute(const SplashPage(), settings);
     }

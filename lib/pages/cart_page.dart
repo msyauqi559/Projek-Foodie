@@ -11,6 +11,7 @@ import '../widgets/food_checkout_card.dart';
 import '../widgets/order_summary_card.dart';
 import '../widgets/page_header.dart';
 import '../widgets/reusable_button.dart';
+import '../services/database_helper.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key, required this.food});
@@ -163,7 +164,12 @@ class _CartPageState extends State<CartPage> {
                   ),
                   child: ReusableButton(
                     label: 'Pesan Sekarang!',
-                    onPressed: () => _showSuccessSheet(context),
+                    onPressed: () async {
+                      // Simpan ke SQLite
+                      await DatabaseHelper.instance.insertPesanan(previewOrder);
+                      // Tampilkan popup sukses
+                      if (context.mounted) _showSuccessSheet(context);
+                    },
                     borderRadius: AppDimensions.radiusMd,
                     height: 60,
                   ),

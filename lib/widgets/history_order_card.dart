@@ -18,8 +18,23 @@ class HistoryOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color statusColor =
-        order.isSuccess ? AppColors.historySuccess : AppColors.danger;
+    final Color statusColor;
+    final IconData statusIcon;
+    final Color statusIconColor;
+
+    if (order.statusLabel == 'Berhasil') {
+      statusColor = AppColors.historySuccess;
+      statusIcon = Icons.check_rounded;
+      statusIconColor = AppColors.dark;
+    } else if (order.statusLabel == 'Belum Membayar') {
+      statusColor = AppColors.warning;
+      statusIcon = Icons.access_time_rounded;
+      statusIconColor = Colors.white;
+    } else {
+      statusColor = AppColors.danger;
+      statusIcon = Icons.close_rounded;
+      statusIconColor = AppColors.card;
+    }
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -109,10 +124,8 @@ class HistoryOrderCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      order.isSuccess
-                          ? Icons.check_rounded
-                          : Icons.close_rounded,
-                      color: order.isSuccess ? AppColors.dark : AppColors.card,
+                      statusIcon,
+                      color: statusIconColor,
                       size: 28,
                     ),
                   ),

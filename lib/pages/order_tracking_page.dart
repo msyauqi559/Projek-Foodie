@@ -92,7 +92,9 @@ class OrderTrackingPage extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Jalan Imam Bonjol No.19',
+                          (trackingOrder.userAddress != null && trackingOrder.userAddress!.isNotEmpty)
+                              ? trackingOrder.userAddress!
+                              : 'Jalan Imam Bonjol No.19',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,

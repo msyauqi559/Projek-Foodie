@@ -189,6 +189,24 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /// Tampilan ketika data profil sudah terisi
+  Widget _buildStatItem(BuildContext context, IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, size: 20, color: AppColors.primary),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppColors.grayText),
+        ),
+      ],
+    );
+  }
+
+  /// Tampilan ketika data profil sudah terisi
   Widget _buildFilledProfile(BuildContext context) {
     final name = userProfile?['name'] ?? 'M. Fattah Syauqi';
     final email = userProfile?['email'] ?? 'msyauqi559@gmail.com';
@@ -204,8 +222,8 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Container(
           width: double.infinity,
-          margin: const EdgeInsets.only(top: 45),
-          padding: const EdgeInsets.fromLTRB(0, 65, 0, 16),
+          margin: const EdgeInsets.only(top: 55),
+          padding: const EdgeInsets.fromLTRB(0, 75, 0, 16),
           decoration: BoxDecoration(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(24),
@@ -213,8 +231,8 @@ class _ProfilePageState extends State<ProfilePage> {
             boxShadow: const [
               BoxShadow(
                 color: AppColors.shadow,
-                blurRadius: 20,
-                offset: Offset(0, 8),
+                blurRadius: 24,
+                offset: Offset(0, 10),
               ),
             ],
           ),
@@ -226,13 +244,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     .textTheme
                     .headlineMedium
                     ?.copyWith(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
                     ),
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -241,20 +259,36 @@ class _ProfilePageState extends State<ProfilePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.verified_rounded, size: 14, color: AppColors.success),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Text(
-                      'Member Foodie',
+                      'Member Foodie Premium',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.success,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
                           ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
+              
+              // Statistics Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildStatItem(context, Icons.receipt_long_rounded, 'Pesanan', '5+ Kali'),
+                  Container(height: 28, width: 1, color: Colors.grey.shade200),
+                  _buildStatItem(context, Icons.workspace_premium_rounded, 'Loyalitas', 'Premium'),
+                  Container(height: 28, width: 1, color: Colors.grey.shade200),
+                  _buildStatItem(context, Icons.calendar_month_rounded, 'Gabung', '2026'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: AppColors.borderLight, height: 1),
+              
               Padding(
-                padding: const EdgeInsets.only(left: 22, right: 22),
+                padding: const EdgeInsets.fromLTRB(22, 16, 22, 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -266,7 +300,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
               _DetailRow(
                 icon: Icons.alternate_email_rounded,
                 label: 'Email',
@@ -291,25 +324,38 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
         ),
+        
+        // Premium Avatar Ring decoration
         Container(
           width: 110,
           height: 110,
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: AppColors.card,
             shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [AppColors.primary, Color(0xFFFF9800)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: ReusableImage(
-            imagePath: displayPhoto,
-            fit: BoxFit.cover,
-            borderRadius: 60,
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: ReusableImage(
+              imagePath: displayPhoto,
+              fit: BoxFit.cover,
+              borderRadius: 55,
+            ),
           ),
         ),
       ],
@@ -393,19 +439,39 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          TextButton.icon(
-                            onPressed: () {
-                              _pickProfilePhoto(setModalState, (newPhoto) {
-                                setModalState(() {
-                                  selectedPhoto = newPhoto;
-                                });
-                              });
-                            },
-                            icon: const Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 18),
-                            label: const Text(
-                              'Pilih dari Galeri',
-                              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () {
+                                  _pickProfilePhoto(setModalState, (newPhoto) {
+                                    setModalState(() {
+                                      selectedPhoto = newPhoto;
+                                    });
+                                  });
+                                },
+                                icon: const Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 18),
+                                label: const Text(
+                                  'Pilih dari Galeri',
+                                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              if (selectedPhoto.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    setModalState(() {
+                                      selectedPhoto = '';
+                                    });
+                                  },
+                                  icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 18),
+                                  label: const Text(
+                                    'Hapus Foto',
+                                    style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ),
@@ -437,36 +503,93 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     // Gender Selection
                     const Text('Gender', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 6),
-                    RadioGroup<String>(
-                      groupValue: selectedGender,
-                      onChanged: (val) {
-                        if (val != null) {
-                          setModalState(() => selectedGender = val);
-                        }
-                      },
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: const Text('Laki-laki', style: TextStyle(fontSize: 13)),
-                              value: 'Laki - laki',
-                              activeColor: AppColors.primary,
-                              contentPadding: EdgeInsets.zero,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setModalState(() => selectedGender = 'Laki - laki'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: selectedGender == 'Laki - laki'
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: selectedGender == 'Laki - laki'
+                                      ? AppColors.primary
+                                      : Colors.grey.shade300,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.male_rounded,
+                                    color: selectedGender == 'Laki - laki' ? AppColors.primary : Colors.grey,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Laki-laki',
+                                    style: TextStyle(
+                                      color: selectedGender == 'Laki - laki' ? AppColors.primary : Colors.grey[700],
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: const Text('Perempuan', style: TextStyle(fontSize: 13)),
-                              value: 'Perempuan',
-                              activeColor: AppColors.primary,
-                              contentPadding: EdgeInsets.zero,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setModalState(() => selectedGender = 'Perempuan'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: selectedGender == 'Perempuan'
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: selectedGender == 'Perempuan'
+                                      ? AppColors.primary
+                                      : Colors.grey.shade300,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.female_rounded,
+                                    color: selectedGender == 'Perempuan' ? AppColors.primary : Colors.grey,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Perempuan',
+                                    style: TextStyle(
+                                      color: selectedGender == 'Perempuan' ? AppColors.primary : Colors.grey[700],
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // Address Field
                     const Text('Alamat Lengkap Pengiriman', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),

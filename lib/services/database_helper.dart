@@ -291,6 +291,9 @@ class DatabaseHelper {
         if (menu != null) {
           final joinedMap = Map<String, dynamic>.from(orderMap);
           joinedMap['u_name'] = user?['name'] ?? 'User Umum';
+          joinedMap['u_photo_path'] = user?['photo_path'] ?? '';
+          joinedMap['u_address'] = user?['address'] ?? '';
+          joinedMap['u_phone'] = user?['phone'] ?? '';
           joinedMap['m_name'] = menu['name'];
           joinedMap['m_category'] = menu['category'];
           joinedMap['m_address'] = menu['address'];
@@ -324,6 +327,9 @@ class DatabaseHelper {
         p.tax,
         p.promo_code,
         u.name          AS u_name,
+        u.photo_path    AS u_photo_path,
+        u.address       AS u_address,
+        u.phone         AS u_phone,
         m.name          AS m_name,
         m.category      AS m_category,
         m.address       AS m_address,
@@ -367,6 +373,9 @@ class DatabaseHelper {
         p.tax,
         p.promo_code,
         u.name          AS u_name,
+        u.photo_path    AS u_photo_path,
+        u.address       AS u_address,
+        u.phone         AS u_phone,
         m.name          AS m_name,
         m.category      AS m_category,
         m.address       AS m_address,

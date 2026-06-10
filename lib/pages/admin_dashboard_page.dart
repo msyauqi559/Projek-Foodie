@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
 import '../models/food_item.dart';
 import '../models/order_history_item.dart';
@@ -285,35 +286,71 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               badgeTextColor = Colors.red.shade800;
             }
 
-            return InkWell(
-              onTap: () => AppNavigation.openOrderDetail(context, order),
-              borderRadius: BorderRadius.circular(16),
-              child: Card(
+            return Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.borderSubtle),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => AppNavigation.openOrderDetail(context, order),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Header: User Info + Delete Button
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(6),
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
                           ),
-                          child: const Icon(Icons.person_rounded, size: 18, color: AppColors.primary),
+                          child: ReusableImage(
+                            imagePath: (order.userPhotoPath != null && order.userPhotoPath!.isNotEmpty)
+                                ? order.userPhotoPath!
+                                : AppAssets.user,
+                            fit: BoxFit.cover,
+                            borderRadius: 15,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(
-                            order.userName ?? 'User Umum',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                order.userName ?? 'User Umum',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              if (order.userPhone != null && order.userPhone!.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.phone_rounded, size: 11, color: AppColors.grayText),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      order.userPhone!,
+                                      style: const TextStyle(color: AppColors.grayText, fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                         IconButton(
@@ -409,7 +446,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
               ),
             ),
-          );
+          ),
+        );
         },
         );
       },

@@ -10,6 +10,9 @@ class OrderHistoryItem {
     this.menuId,
     this.userId,
     this.userName,
+    this.userPhotoPath,
+    this.userAddress,
+    this.userPhone,
     required this.id,
     required this.food,
     required this.quantity,
@@ -34,6 +37,15 @@ class OrderHistoryItem {
 
   /// Nama User. Di-resolve dari query JOIN.
   final String? userName;
+
+  /// Path Foto User. Di-resolve dari query JOIN.
+  final String? userPhotoPath;
+
+  /// Alamat User. Di-resolve dari query JOIN.
+  final String? userAddress;
+
+  /// Nomor Telepon User. Di-resolve dari query JOIN.
+  final String? userPhone;
 
   final String id;
   final FoodItem food;
@@ -94,6 +106,9 @@ class OrderHistoryItem {
       menuId: map['menu_id'] as int,
       userId: map['user_id'] as int?,
       userName: map['u_name'] as String?,
+      userPhotoPath: map['u_photo_path'] as String?,
+      userAddress: map['u_address'] as String?,
+      userPhone: map['u_phone'] as String?,
       id: 'history-${map['id']}',
       food: food,
       quantity: map['quantity'] as int,

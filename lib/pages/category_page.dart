@@ -25,12 +25,25 @@ class CategoryPage extends StatefulWidget {
 class _CategoryPageState extends State<CategoryPage> {
   late String selectedCategory;
   late Future<List<FoodItem>> _menusFuture;
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     selectedCategory = widget.initialCategory ?? 'Semua';
     _loadMenus();
+    _searchCtrl.addListener(() {
+      setState(() {
+        _searchQuery = _searchCtrl.text.trim();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   void _loadMenus() {
@@ -53,12 +66,17 @@ class _CategoryPageState extends State<CategoryPage> {
                 ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const AppTextField(
+          AppTextField(
+            controller: _searchCtrl,
             hintText: 'Cari menu....',
             prefixIcon: Icons.search_rounded,
             borderColor: AppColors.primary,
             borderRadius: AppDimensions.tabSearchRadius,
-            contentPadding: EdgeInsets.symmetric(
+            suffixIcon: _searchQuery.isNotEmpty ? Icons.clear_rounded : null,
+            onSuffixTap: () {
+              _searchCtrl.clear();
+            },
+            contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 16,
             ),
@@ -106,11 +124,18 @@ class _CategoryPageState extends State<CategoryPage> {
                   ),
                 );
               }
+
+              // Filter data berdasarkan query pencarian
+              final filteredMenus = allMenus.where((m) {
+                final query = _searchQuery.toLowerCase();
+                return m.name.toLowerCase().contains(query) ||
+                    m.category.toLowerCase().contains(query);
+              }).toList();
               
               // Filter data berdasarkan SQLite records
-              final nusantaraFoods = allMenus.where((m) => m.category == 'Nusantara').toList();
-              final healthyFoods = allMenus.where((m) => m.category == 'Sehat').toList();
-              final fastFoods = allMenus.where((m) => m.category == 'Fastfood').toList();
+              final nusantaraFoods = filteredMenus.where((m) => m.category == 'Nusantara').toList();
+              final healthyFoods = filteredMenus.where((m) => m.category == 'Sehat').toList();
+              final fastFoods = filteredMenus.where((m) => m.category == 'Fastfood').toList();
 
               return Column(
                 children: [
@@ -134,8 +159,30 @@ class _CategoryPageState extends State<CategoryPage> {
                     ),
                   ],
                   
+                  // Empty state jika pencarian tidak ditemukan
+                  if (filteredMenus.isEmpty && _searchQuery.isNotEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off_rounded, size: 54, color: Colors.grey),
+                          SizedBox(height: 12),
+                          Text(
+                            'Menu tidak ditemukan',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Coba cari kata kunci lainnya.',
+                            style: TextStyle(color: AppColors.grayText, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // Empty state jika kategori kosong
-                  if (selectedCategory != 'Semua' && 
+                  if (selectedCategory != 'Semua' && _searchQuery.isEmpty &&
                       ((selectedCategory == 'Nusantara' && nusantaraFoods.isEmpty) ||
                        (selectedCategory == 'Sehat' && healthyFoods.isEmpty) ||
                        (selectedCategory == 'Fastfood' && fastFoods.isEmpty)))

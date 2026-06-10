@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_assets.dart';
@@ -23,11 +25,34 @@ class _ProfilePageState extends State<ProfilePage> {
   int? loggedInUserId;
   Map<String, dynamic>? userProfile;
   bool isLoading = true;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
+  }
+
+  Future<void> _pickProfilePhoto(StateSetter setModalState, Function(String) onPhotoPicked) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 80,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final base64Str = base64Encode(bytes);
+        onPhotoPicked('data:image/png;base64,$base64Str');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memilih foto: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -343,25 +368,47 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 20),
                     
-                    // Avatar preset selection
+                    // Foto Profil
                     const Text(
-                      'Pilih Foto Profil',
+                      'Foto Profil',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildPhotoOption(AppAssets.user, selectedPhoto, () {
-                          setModalState(() => selectedPhoto = AppAssets.user);
-                        }),
-                        _buildPhotoOption(AppAssets.courier, selectedPhoto, () {
-                          setModalState(() => selectedPhoto = AppAssets.courier);
-                        }),
-                        _buildPhotoOption(AppAssets.logo, selectedPhoto, () {
-                          setModalState(() => selectedPhoto = AppAssets.logo);
-                        }),
-                      ],
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 90,
+                            height: 90,
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.card,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.primary, width: 2),
+                            ),
+                            child: ReusableImage(
+                              imagePath: selectedPhoto.isEmpty ? AppAssets.user : selectedPhoto,
+                              fit: BoxFit.cover,
+                              borderRadius: 45,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: () {
+                              _pickProfilePhoto(setModalState, (newPhoto) {
+                                setModalState(() {
+                                  selectedPhoto = newPhoto;
+                                });
+                              });
+                            },
+                            icon: const Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 18),
+                            label: const Text(
+                              'Pilih dari Galeri',
+                              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 20),
                     
@@ -477,31 +524,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildPhotoOption(String assetPath, String selectedPath, VoidCallback onTap) {
-    final bool isSelected = selectedPath == assetPath || (selectedPath.isEmpty && assetPath == AppAssets.user);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            width: 3,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(40),
-          child: Image.asset(
-            assetPath,
-            width: 60,
-            height: 60,
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Future<void> _showLogoutDialog(BuildContext parentContext) {
     return showModalBottomSheet<void>(

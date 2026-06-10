@@ -24,11 +24,24 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   late Future<List<OrderHistoryItem>> _ordersFuture;
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _ordersFuture = _loadOrders();
+    _searchCtrl.addListener(() {
+      setState(() {
+        _searchQuery = _searchCtrl.text.trim();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<List<OrderHistoryItem>> _loadOrders() async {
@@ -53,12 +66,17 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const AppTextField(
+          AppTextField(
+            controller: _searchCtrl,
             hintText: 'Cari riwayat pesanan....',
             prefixIcon: Icons.search_rounded,
             borderColor: AppColors.primary,
             borderRadius: AppDimensions.tabSearchRadius,
-            contentPadding: EdgeInsets.symmetric(
+            suffixIcon: _searchQuery.isNotEmpty ? Icons.clear_rounded : null,
+            onSuffixTap: () {
+              _searchCtrl.clear();
+            },
+            contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 16,
             ),
@@ -84,6 +102,13 @@ class _HistoryPageState extends State<HistoryPage> {
 
               final List<OrderHistoryItem> orders = snapshot.data ?? [];
 
+              // Filter data berdasarkan query pencarian
+              final filteredOrders = orders.where((order) {
+                final query = _searchQuery.toLowerCase();
+                return order.food.name.toLowerCase().contains(query) ||
+                    order.food.category.toLowerCase().contains(query);
+              }).toList();
+
               if (orders.isEmpty) {
                 return Center(
                   child: Padding(
@@ -102,8 +127,26 @@ class _HistoryPageState extends State<HistoryPage> {
                 );
               }
 
+              if (filteredOrders.isEmpty && _searchQuery.isNotEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.search_off_rounded, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Riwayat pesanan tidak ditemukan',
+                          style: TextStyle(color: AppColors.grayText, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
               return Column(
-                children: orders.map(
+                children: filteredOrders.map(
                   (order) => Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                     child: HistoryOrderCard(

@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
-import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
 import '../models/food_item.dart';
 import '../services/database_helper.dart';
@@ -27,6 +28,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
   late TextEditingController _imageCtrl;
   
   bool _isLoading = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -38,7 +40,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     _descCtrl = TextEditingController(text: f?.description ?? '');
     _priceCtrl = TextEditingController(text: f?.price.toStringAsFixed(0) ?? '');
     _tagsCtrl = TextEditingController(text: f?.tags.join(',') ?? 'Favorite,Gurih');
-    _imageCtrl = TextEditingController(text: f?.imagePath ?? AppAssets.salad);
+    _imageCtrl = TextEditingController(text: f?.imagePath ?? '');
   }
 
   @override
@@ -53,8 +55,40 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800, // Menjaga ukuran gambar agar database tetap ringan
+        maxHeight: 800,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final base64Str = base64Encode(bytes);
+        setState(() {
+          _imageCtrl.text = 'data:image/png;base64,$base64Str';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memilih gambar: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _saveData() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_imageCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan pilih gambar makanan terlebih dahulu')),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -65,7 +99,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
       category: _catCtrl.text,
       address: _addrCtrl.text,
       description: _descCtrl.text,
-      imagePath: _imageCtrl.text.trim().isEmpty ? AppAssets.salad : _imageCtrl.text.trim(),
+      imagePath: _imageCtrl.text.trim(),
       price: double.parse(_priceCtrl.text),
       rating: widget.foodToEdit?.rating ?? 5.0, // Default rating untuk menu baru
       deliveryTime: widget.foodToEdit?.deliveryTime ?? '15 min',
@@ -85,20 +119,6 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     }
   }
 
-  Widget _buildPresetChip(String label, String path) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ActionChip(
-        label: Text(label, style: const TextStyle(fontSize: 12)),
-        backgroundColor: AppColors.muted,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        onPressed: () {
-          _imageCtrl.text = path;
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isEdit = widget.foodToEdit != null;
@@ -106,7 +126,10 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Menu' : 'Tambah Menu Baru', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(
+          isEdit ? 'Edit Menu' : 'Tambah Menu Baru',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
@@ -117,7 +140,10 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
               child: ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
-                  const Text('Detail Makanan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  const Text(
+                    'Detail Makanan',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary),
+                  ),
                   const SizedBox(height: 20),
                   
                   // Nama
@@ -192,30 +218,49 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Bagian Gambar
+                  // Bagian Gambar Custom
                   const Divider(),
                   const SizedBox(height: 10),
-                  const Text('Gambar Makanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  const Text(
+                    'Gambar Makanan',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary),
+                  ),
                   const SizedBox(height: 12),
                   
                   // Live image preview
                   Center(
                     child: Container(
-                      width: 160,
-                      height: 110,
+                      width: 180,
+                      height: 120,
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.grey.shade50,
                       ),
                       child: ValueListenableBuilder<TextEditingValue>(
                         valueListenable: _imageCtrl,
                         builder: (context, value, child) {
                           final path = value.text.trim();
+                          if (path.isEmpty) {
+                            return const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.image_rounded, size: 40, color: Colors.grey),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Belum ada gambar',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
                           return ReusableImage(
-                            imagePath: path.isEmpty ? AppAssets.salad : path,
+                            imagePath: path,
                             width: double.infinity,
                             height: double.infinity,
-                            borderRadius: 10,
+                            borderRadius: 12,
                           );
                         },
                       ),
@@ -223,38 +268,27 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                   ),
                   const SizedBox(height: 16),
                   
-                  TextFormField(
-                    controller: _imageCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'URL Gambar / Jalur Aset Lokal',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.clear_rounded),
-                        onPressed: () => _imageCtrl.clear(),
+                  // Tombol Pilih Gambar
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+                      label: const Text(
+                        'Pilih Gambar dari Galeri',
+                        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    validator: (v) => v!.isEmpty ? 'Gambar wajib ditentukan' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Preset Aset Lokal:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                  const SizedBox(height: 6),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildPresetChip('Mie Ayam', AppAssets.mieAyam),
-                        _buildPresetChip('Rendang', AppAssets.rendang),
-                        _buildPresetChip('Rawon', AppAssets.rawon),
-                        _buildPresetChip('Bakso', AppAssets.bakso),
-                        _buildPresetChip('Salad', AppAssets.salad),
-                        _buildPresetChip('Lontong Balap', AppAssets.lontongBalap),
-                        _buildPresetChip('Kebab', AppAssets.kebab),
-                      ],
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.primary, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
                     ),
                   ),
                   
                   const SizedBox(height: 32),
 
+                  // Tombol Simpan
                   SizedBox(
                     height: 55,
                     child: ElevatedButton(

@@ -199,6 +199,51 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
+  Future<void> _showStatusDialog(BuildContext context, OrderHistoryItem order) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final String? selectedStatus = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Update Status Pesanan', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Berhasil', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                leading: const Icon(Icons.check_circle_rounded, color: Colors.green),
+                onTap: () => Navigator.pop(context, 'Berhasil'),
+              ),
+              ListTile(
+                title: const Text('Gagal', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                leading: const Icon(Icons.cancel_rounded, color: Colors.red),
+                onTap: () => Navigator.pop(context, 'Gagal'),
+              ),
+              ListTile(
+                title: const Text('Belum Membayar', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                leading: const Icon(Icons.hourglass_empty_rounded, color: Colors.orange),
+                onTap: () => Navigator.pop(context, 'Belum Membayar'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selectedStatus != null) {
+      await DatabaseHelper.instance.updatePesananStatus(order.dbId!, selectedStatus);
+      if (mounted) {
+        setState(() {});
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Status pesanan untuk ${order.userName ?? "User"} diubah menjadi: $selectedStatus'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   Widget _buildOrdersTab() {
     return FutureBuilder<List<OrderHistoryItem>>(
       future: DatabaseHelper.instance.getAllPesanan(),
@@ -221,15 +266,35 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           itemCount: orders.length,
           itemBuilder: (context, index) {
             final order = orders[index];
-            final bool success = order.isSuccess;
+            
+            final Color badgeBgColor;
+            final Color badgeBorderColor;
+            final Color badgeTextColor;
 
-            return Card(
-              color: Colors.white,
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+            if (order.statusLabel == 'Berhasil') {
+              badgeBgColor = Colors.green.shade50;
+              badgeBorderColor = Colors.green.shade300;
+              badgeTextColor = Colors.green.shade800;
+            } else if (order.statusLabel == 'Belum Membayar') {
+              badgeBgColor = Colors.orange.shade50;
+              badgeBorderColor = Colors.orange.shade300;
+              badgeTextColor = Colors.orange.shade800;
+            } else {
+              badgeBgColor = Colors.red.shade50;
+              badgeBorderColor = Colors.red.shade300;
+              badgeTextColor = Colors.red.shade800;
+            }
+
+            return InkWell(
+              onTap: () => AppNavigation.openOrderDetail(context, order),
+              borderRadius: BorderRadius.circular(16),
+              child: Card(
+                color: Colors.white,
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -307,19 +372,34 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           order.dateLabel,
                           style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: success ? Colors.green.shade50 : Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: success ? Colors.green.shade300 : Colors.red.shade300),
-                          ),
-                          child: Text(
-                            success ? 'Berhasil' : 'Gagal',
-                            style: TextStyle(
-                              color: success ? Colors.green.shade800 : Colors.red.shade800,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11,
+                        InkWell(
+                          onTap: () => _showStatusDialog(context, order),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: badgeBgColor,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: badgeBorderColor),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  order.statusLabel,
+                                  style: TextStyle(
+                                    color: badgeTextColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.edit_rounded,
+                                  size: 11,
+                                  color: badgeTextColor,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -328,8 +408,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   ],
                 ),
               ),
-            );
-          },
+            ),
+          );
+        },
         );
       },
     );

@@ -55,9 +55,13 @@ class _CartPageState extends State<CartPage> {
       food: widget.food,
       quantity: quantity,
       userId: loggedInUserId ?? 2, // Default ke 2 (Fattah Syauqi) jika belum dimuat
-      dateLabel: 'Today',
-      statusLabel: 'Berhasil',
-      isSuccess: true,
+      dateLabel: () {
+        final now = DateTime.now();
+        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        return '${now.day} ${months[now.month - 1]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      }(),
+      statusLabel: 'Belum Membayar',
+      isSuccess: false,
       total: _total,
       promoDiscount: _promoDiscount,
       shippingCost: _shippingCost,
@@ -184,7 +188,7 @@ class _CartPageState extends State<CartPage> {
                       // Simpan ke SQLite
                       await DatabaseHelper.instance.insertPesanan(previewOrder);
                       // Tampilkan popup sukses
-                      if (context.mounted) _showSuccessSheet(context);
+                      if (context.mounted) _showSuccessSheet(context, previewOrder);
                     },
                     borderRadius: AppDimensions.radiusMd,
                     height: 60,
@@ -198,7 +202,7 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Future<void> _showSuccessSheet(BuildContext parentContext) {
+  Future<void> _showSuccessSheet(BuildContext parentContext, OrderHistoryItem previewOrder) {
     return showModalBottomSheet<void>(
       context: parentContext,
       isDismissible: false,
@@ -248,15 +252,25 @@ class _CartPageState extends State<CartPage> {
               ),
               const SizedBox(height: 12),
               ReusableButton(
-                label: 'Lacak pesanan anda',
-                onPressed: () {
-                  Navigator.pop(context);
-                  AppNavigation.finishCheckoutGoTracking(parentContext);
-                },
+                label: previewOrder.isSuccess ? 'Lacak pesanan anda' : 'Menunggu Konfirmasi Admin...',
+                onPressed: previewOrder.isSuccess
+                    ? () {
+                        Navigator.pop(context);
+                        AppNavigation.finishCheckoutGoTracking(parentContext, previewOrder);
+                      }
+                    : () {
+                        ScaffoldMessenger.of(parentContext).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Menunggu konfirmasi admin... Status pesanan saat ini: Belum Membayar. Cek berkala di menu History.',
+                            ),
+                          ),
+                        );
+                      },
                 borderRadius: AppDimensions.authButtonRadius,
-                isPrimary: false,
-                backgroundColor: AppColors.neutralButton,
-                borderColor: AppColors.neutralButton,
+                isPrimary: previewOrder.isSuccess,
+                backgroundColor: previewOrder.isSuccess ? AppColors.primary : Colors.grey.shade400,
+                borderColor: previewOrder.isSuccess ? AppColors.primary : Colors.grey.shade400,
               ),
             ],
           ),

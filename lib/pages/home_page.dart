@@ -38,10 +38,25 @@ class _HomePageState extends State<HomePage> {
   /// Dipanggil sekali di [initState], atau di-refresh saat diperlukan.
   late Future<List<FoodItem>> _menusFuture;
 
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
     _loadMenus();
+    _searchCtrl.addListener(() {
+      setState(() {
+        _searchQuery = _searchCtrl.text.trim();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   /// Memuat data menu dari SQLite.
@@ -70,13 +85,17 @@ class _HomePageState extends State<HomePage> {
 
         // ── State 2: Error ──
         if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
 
         // ── State 3: Data Ready ──
         final List<FoodItem> allMenus = snapshot.data ?? [];
+
+        final List<FoodItem> filteredMenus = allMenus.where((menu) {
+          final query = _searchQuery.toLowerCase();
+          return menu.name.toLowerCase().contains(query) ||
+              menu.category.toLowerCase().contains(query);
+        }).toList();
 
         if (allMenus.isEmpty) {
           return FigmaPageBody(
@@ -96,16 +115,21 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // ── Search Bar ──
-                const AppTextField(
+                AppTextField(
+                  controller: _searchCtrl,
                   hintText: 'Cari menu....',
                   prefixIcon: Icons.search_rounded,
                   borderColor: AppColors.primary,
                   borderRadius: AppDimensions.homeSearchRadius,
-                  readOnly: true,
-                  contentPadding: EdgeInsets.symmetric(
+                  suffixIcon: _searchQuery.isNotEmpty ? Icons.clear_rounded : null,
+                  onSuffixTap: () {
+                    _searchCtrl.clear(); //Bersihkan teks jika icon di klik
+                  },
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 16,
                   ),
+                  readOnly: true,
                 ),
                 const SizedBox(height: 60),
 
@@ -131,9 +155,9 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         'Menu Belum Tersedia',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Padding(
@@ -157,18 +181,18 @@ class _HomePageState extends State<HomePage> {
         }
 
         // Ambil 3 menu pertama untuk tampilan highlight
-        final List<FoodItem> highlightMenus = allMenus.take(3).toList();
+        final List<FoodItem> highlightMenus = filteredMenus.take(3).toList();
 
         // Kelompokkan menu berdasarkan kategori untuk section cards
         final Map<String, List<FoodItem>> grouped = {};
-        for (final menu in allMenus) {
+        for (final menu in filteredMenus) {
           grouped.putIfAbsent(menu.category, () => []).add(menu);
         }
 
         // Menu Salad untuk promo banner (cari yang kategori Sehat)
-        final FoodItem? promoFood = allMenus.where(
-          (m) => m.name.toLowerCase().contains('salad'),
-        ).firstOrNull;
+        final FoodItem? promoFood = allMenus
+            .where((m) => m.name.toLowerCase().contains('salad'))
+            .firstOrNull;
 
         return FigmaPageBody(
           child: Column(
@@ -187,28 +211,61 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: AppSpacing.lg),
 
               // ── Search Bar ──
-              const AppTextField(
+              AppTextField(
+                controller: _searchCtrl,
                 hintText: 'Cari menu....',
                 prefixIcon: Icons.search_rounded,
                 borderColor: AppColors.primary,
                 borderRadius: AppDimensions.homeSearchRadius,
-                contentPadding: EdgeInsets.symmetric(
+                suffixIcon: _searchQuery.isNotEmpty ? Icons.clear_rounded : null,
+                onSuffixTap: () {
+                  _searchCtrl.clear();
+                },
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 16,
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
 
-              // ── Promo Banner ──
-              if (promoFood != null)
-                _PromoBanner(
-                  onTap: () => AppNavigation.openFoodDetail(context, promoFood),
+              if (_searchQuery.isNotEmpty && filteredMenus.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 40, bottom: 40),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.search_off_rounded, size: 64, color: Colors.grey),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Menu tidak ditemukan',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Coba cari menu atau kategori makanan lainnya.',
+                          style: TextStyle(fontSize: 13, color: AppColors.grayText),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              if (promoFood != null) const SizedBox(height: AppSpacing.lg),
 
-              // ── Quick Stats Row ──
-              _QuickStatsRow(menuCount: allMenus.length),
-              const SizedBox(height: AppSpacing.lg),
+              if (filteredMenus.isNotEmpty) ...[
+                // ── Promo Banner ──
+                if (promoFood != null)
+                  _PromoBanner(
+                    onTap: () => AppNavigation.openFoodDetail(context, promoFood),
+                  ),
+                if (promoFood != null) const SizedBox(height: AppSpacing.lg),
+
+                // ── Quick Stats Row ──
+                _QuickStatsRow(menuCount: filteredMenus.length),
+                const SizedBox(height: AppSpacing.lg),
 
               // ── Divider ──
               Container(
@@ -226,15 +283,14 @@ class _HomePageState extends State<HomePage> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
-                  itemCount: allMenus.length > 5 ? 5 : allMenus.length,
+                  itemCount: filteredMenus.length > 5 ? 5 : filteredMenus.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(width: AppSpacing.sm),
                   itemBuilder: (context, index) {
-                    final food = allMenus[index];
+                    final food = filteredMenus[index];
                     return _PopularMenuCard(
                       food: food,
-                      onTap: () =>
-                          AppNavigation.openFoodDetail(context, food),
+                      onTap: () => AppNavigation.openFoodDetail(context, food),
                     );
                   },
                 ),
@@ -290,10 +346,8 @@ class _HomePageState extends State<HomePage> {
                             final food = entry.value[i];
                             return _MiniMenuCard(
                               food: food,
-                              onTap: () => AppNavigation.openFoodDetail(
-                                context,
-                                food,
-                              ),
+                              onTap: () =>
+                                  AppNavigation.openFoodDetail(context, food),
                             );
                           },
                         ),
@@ -302,6 +356,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 );
               }),
+            ],
             ],
           ),
         );
@@ -378,10 +433,10 @@ class _StatChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -395,10 +450,7 @@ class _StatChip extends StatelessWidget {
 // ══════════════════════════════════════════════════════════
 
 class _PopularMenuCard extends StatelessWidget {
-  const _PopularMenuCard({
-    required this.food,
-    required this.onTap,
-  });
+  const _PopularMenuCard({required this.food, required this.onTap});
 
   final FoodItem food;
   final VoidCallback onTap;
@@ -474,10 +526,10 @@ class _PopularMenuCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const Spacer(),
             // Harga + Waktu kirim
@@ -487,10 +539,10 @@ class _PopularMenuCard extends StatelessWidget {
                   child: Text(
                     PriceFormatter.toRupiah(food.price),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 Icon(
@@ -502,9 +554,9 @@ class _PopularMenuCard extends StatelessWidget {
                 Text(
                   food.deliveryTime,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 10,
-                        color: AppColors.grayText,
-                      ),
+                    fontSize: 10,
+                    color: AppColors.grayText,
+                  ),
                 ),
               ],
             ),
@@ -537,8 +589,9 @@ class _HighlightFoodCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.6)),
+        border: Border.all(
+          color: AppColors.borderSubtle.withValues(alpha: 0.6),
+        ),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadow,
@@ -604,9 +657,9 @@ class _HighlightFoodCard extends StatelessWidget {
                   food.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 15,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 4),
                 // Tags
@@ -625,12 +678,11 @@ class _HighlightFoodCard extends StatelessWidget {
                       ),
                       child: Text(
                         tag,
-                        style:
-                            Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 9,
-                                  color: AppColors.primaryDark,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 9,
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     );
                   }).toList(),
@@ -651,11 +703,10 @@ class _HighlightFoodCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         food.address,
-                        style:
-                            Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 10.5,
-                                  color: AppColors.textPrimary,
-                                ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 10.5,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ],
@@ -667,12 +718,12 @@ class _HighlightFoodCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         PriceFormatter.toRupiah(food.price),
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: AppColors.primary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: AppColors.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -687,8 +738,7 @@ class _HighlightFoodCard extends StatelessWidget {
                           foregroundColor: AppColors.card,
                           elevation: 0,
                           minimumSize: const Size(72, 32),
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -718,10 +768,7 @@ class _HighlightFoodCard extends StatelessWidget {
 // ══════════════════════════════════════════════════════════
 
 class _CategoryHeader extends StatelessWidget {
-  const _CategoryHeader({
-    required this.category,
-    required this.count,
-  });
+  const _CategoryHeader({required this.category, required this.count});
 
   final String category;
   final int count;
@@ -755,9 +802,9 @@ class _CategoryHeader extends StatelessWidget {
         Text(
           category,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const Spacer(),
         Container(
@@ -769,10 +816,10 @@ class _CategoryHeader extends StatelessWidget {
           child: Text(
             '$count item',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
       ],
@@ -785,10 +832,7 @@ class _CategoryHeader extends StatelessWidget {
 // ══════════════════════════════════════════════════════════
 
 class _MiniMenuCard extends StatelessWidget {
-  const _MiniMenuCard({
-    required this.food,
-    required this.onTap,
-  });
+  const _MiniMenuCard({required this.food, required this.onTap});
 
   final FoodItem food;
   final VoidCallback onTap;
@@ -830,19 +874,19 @@ class _MiniMenuCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     PriceFormatter.toRupiah(food.price),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11,
-                        ),
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -855,11 +899,10 @@ class _MiniMenuCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         food.rating.toStringAsFixed(1),
-                        style:
-                            Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 10,
-                                  color: AppColors.grayText,
-                                ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 10,
+                          color: AppColors.grayText,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Icon(
@@ -870,11 +913,10 @@ class _MiniMenuCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         food.deliveryTime,
-                        style:
-                            Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 10,
-                                  color: AppColors.grayText,
-                                ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 10,
+                          color: AppColors.grayText,
+                        ),
                       ),
                     ],
                   ),
@@ -941,9 +983,7 @@ class _PromoBanner extends StatelessWidget {
                           width: textWidth.clamp(170, 230),
                           child: Text(
                             'Energi alami\ndalam satu\nmangkuk\nSalad',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineMedium
+                            style: Theme.of(context).textTheme.headlineMedium
                                 ?.copyWith(
                                   fontSize: 20,
                                   height: 1.45,

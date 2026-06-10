@@ -69,8 +69,8 @@ class AppNavigation {
     Navigator.pushNamed(context, AppRoutes.orderDetail, arguments: order);
   }
 
-  static void openTracking(BuildContext context) {
-    Navigator.pushNamed(context, AppRoutes.tracking);
+  static void openTracking(BuildContext context, [OrderHistoryItem? order]) {
+    Navigator.pushNamed(context, AppRoutes.tracking, arguments: order);
   }
 
   /// Setelah checkout sukses: kembali ke Home (tab shell).
@@ -83,11 +83,12 @@ class AppNavigation {
   }
 
   /// Setelah checkout sukses: lacak pesanan (tetap di atas shell).
-  static void finishCheckoutGoTracking(BuildContext context) {
+  static void finishCheckoutGoTracking(BuildContext context, OrderHistoryItem order) {
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.tracking,
       (route) => route.settings.name == AppRoutes.shell,
+      arguments: order,
     );
   }
 

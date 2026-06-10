@@ -43,6 +43,36 @@ class OrderDetailPage extends StatelessWidget {
               showPromoCode: true,
               totalLabel: 'Total yang sudah dibayar',
             ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: order.statusLabel == 'Berhasil' ? AppColors.primary : Colors.grey.shade400,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: order.statusLabel == 'Berhasil'
+                    ? () => AppNavigation.openTracking(context, order)
+                    : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Status saat ini: ${order.statusLabel}. Hubungi admin untuk konfirmasi pembayaran.',
+                            ),
+                          ),
+                        );
+                      },
+                child: Text(
+                  order.statusLabel == 'Berhasil' ? 'Lacak Pesanan Anda' : 'Menunggu Konfirmasi Admin',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ),
           ],
         ),
       ),

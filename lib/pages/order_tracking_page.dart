@@ -14,14 +14,16 @@ import '../widgets/reusable_image.dart';
 class OrderTrackingPage extends StatelessWidget {
   const OrderTrackingPage({
     super.key,
+    this.order,
     this.showBackButton = true,
   });
 
+  final OrderHistoryItem? order;
   final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
-    final order = DummyDataService.orderHistory.first;
+    final trackingOrder = order ?? DummyDataService.orderHistory.first;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -273,7 +275,7 @@ class OrderTrackingPage extends StatelessWidget {
                                 height: 1,
                               ),
                               const SizedBox(height: 12),
-                              _TrackingSummary(order: order),
+                              _TrackingSummary(order: trackingOrder),
                             ],
                           ),
                         ),

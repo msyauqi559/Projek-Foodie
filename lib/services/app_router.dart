@@ -44,8 +44,9 @@ class AppRouter {
         final FoodItem food = settings.arguments! as FoodItem;
         return _slideRoute(CartPage(food: food), settings);
       case AppRoutes.tracking:
+        final OrderHistoryItem? order = settings.arguments as OrderHistoryItem?;
         return _slideRoute(
-          const OrderTrackingPage(showBackButton: true),
+          OrderTrackingPage(order: order, showBackButton: true),
           settings,
         );
       case AppRoutes.orderDetail:

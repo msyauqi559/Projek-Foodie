@@ -402,6 +402,30 @@ class DatabaseHelper {
     );
   }
 
+  /// Memperbarui status transaksi pesanan user (Berhasil / Gagal / Belum Membayar)
+  Future<int> updatePesananStatus(int id, String statusLabel) async {
+    final int isSuccessVal = (statusLabel == 'Berhasil') ? 1 : 0;
+    if (_useMemoryFallback) {
+      final idx = _webOrders.indexWhere((o) => o['id'] == id);
+      if (idx != -1) {
+        _webOrders[idx]['is_success'] = isSuccessVal;
+        _webOrders[idx]['status_label'] = statusLabel;
+        return 1;
+      }
+      return 0;
+    }
+    final Database db = await database;
+    return await db.update(
+      'tb_pesanan',
+      {
+        'is_success': isSuccessVal,
+        'status_label': statusLabel,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   // ════════════════════════════════════════════════════════════════════════════
   // CRUD — tb_user (Registrasi, Login, Profil Dinamis)
   // ════════════════════════════════════════════════════════════════════════════

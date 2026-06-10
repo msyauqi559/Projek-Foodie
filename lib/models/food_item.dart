@@ -58,7 +58,7 @@ class FoodItem {
   /// Factory: konversi Map dari SQLite → FoodItem object.
   ///
   /// [map['id']] = integer dari kolom `id` SQLite.
-  /// [map['tags']] = string koma-separated, dipecah jadi List<String>.
+  /// [map['tags']] = string koma-separated, dipecah jadi `List<String>`.
   factory FoodItem.fromMap(Map<String, dynamic> map) {
     return FoodItem(
       dbId: map['id'] as int,

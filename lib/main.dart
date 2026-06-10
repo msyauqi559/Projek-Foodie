@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'constants/app_colors.dart';
@@ -13,9 +15,17 @@ import 'services/database_helper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi database SQLite — membuat file foodie.db & tabel
-  // jika belum ada, atau langsung membuka jika sudah ada.
-  await DatabaseHelper.instance.database;
+  // Inisialisasi database SQLite jika di platform native mobile (Android/iOS)
+  bool isMobile = false;
+  if (!kIsWeb) {
+    try {
+      isMobile = Platform.isAndroid || Platform.isIOS;
+    } catch (_) {}
+  }
+
+  if (isMobile) {
+    await DatabaseHelper.instance.database;
+  }
 
   runApp(const FoodieApp());
 }

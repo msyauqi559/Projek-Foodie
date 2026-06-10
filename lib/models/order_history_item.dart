@@ -8,6 +8,8 @@ class OrderHistoryItem {
   const OrderHistoryItem({
     this.dbId,
     this.menuId,
+    this.userId,
+    this.userName,
     required this.id,
     required this.food,
     required this.quantity,
@@ -27,6 +29,12 @@ class OrderHistoryItem {
   /// Foreign Key → tb_menu.id. Digunakan saat INSERT ke database.
   final int? menuId;
 
+  /// Foreign Key → tb_user.id. Menyimpan user yang melakukan pesanan.
+  final int? userId;
+
+  /// Nama User. Di-resolve dari query JOIN.
+  final String? userName;
+
   final String id;
   final FoodItem food;
   final int quantity;
@@ -45,6 +53,7 @@ class OrderHistoryItem {
   /// [is_success] disimpan sebagai INTEGER (1/0) karena SQLite tidak punya BOOLEAN.
   Map<String, dynamic> toMap() {
     return {
+      'user_id': userId,
       'menu_id': menuId ?? food.dbId,
       'quantity': quantity,
       'date_label': dateLabel,
@@ -83,6 +92,8 @@ class OrderHistoryItem {
     return OrderHistoryItem(
       dbId: map['id'] as int,
       menuId: map['menu_id'] as int,
+      userId: map['user_id'] as int?,
+      userName: map['u_name'] as String?,
       id: 'history-${map['id']}',
       food: food,
       quantity: map['quantity'] as int,

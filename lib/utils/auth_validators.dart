@@ -1,8 +1,9 @@
 class AuthValidators {
   const AuthValidators._();
 
-  static bool hasGmailDomain(String email) {
-    return email.trim().toLowerCase().contains('@gmail.com');
+  static bool isValidEmailFormat(String email) {
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegex.hasMatch(email.trim());
   }
 
   static bool isPasswordLongEnough(String password) {
@@ -13,8 +14,8 @@ class AuthValidators {
     if (email.trim().isEmpty) {
       return 'Email wajib diisi';
     }
-    if (!hasGmailDomain(email)) {
-      return 'Email harus mengandung @gmail.com';
+    if (!isValidEmailFormat(email)) {
+      return 'Format email tidak valid';
     }
     return null;
   }

@@ -15,12 +15,12 @@ class HomeBrandHeader extends StatelessWidget {
       children: [
         const ReusableImage(
           imagePath: AppAssets.logo,
-          width: 85,
-          height: 85,
+          width: 48,
+          height: 48,
           fit: BoxFit.contain,
           borderRadius: 0,
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,8 +29,8 @@ class HomeBrandHeader extends StatelessWidget {
               Text(
                 'Foodie',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.primary,
                       height: 1.1,
                     ),
@@ -38,8 +38,8 @@ class HomeBrandHeader extends StatelessWidget {
               Text(
                 'Pesan Cepat, Makan Enak',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontSize: 11,
-                      color: AppColors.textPrimary,
+                      fontSize: 10,
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w400,
                     ),
               ),

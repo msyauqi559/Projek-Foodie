@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
@@ -8,6 +9,8 @@ import '../widgets/figma_page_body.dart';
 import '../widgets/reusable_button.dart';
 import '../widgets/reusable_image.dart';
 import '../widgets/section_header.dart';
+import '../widgets/app_text_field.dart';
+import '../services/database_helper.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -17,12 +20,48 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Simulasi state user: false (kosong), true (terisi)
-  // Anda bisa mengganti ini nanti saat menghubungkan dengan Auth betulan
-  bool isProfileFilled = false;
+  int? loggedInUserId;
+  Map<String, dynamic>? userProfile;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() {
+      isLoading = true;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    // Default ke ID 2 jika session kosong (kredensial M. Fattah Syauqi di seeder)
+    final userId = prefs.getInt('user_id') ?? 2;
+    final profile = await DatabaseHelper.instance.getUserProfile(userId);
+    setState(() {
+      loggedInUserId = userId;
+      userProfile = profile;
+      isLoading = false;
+    });
+  }
+
+  bool get isProfileFilled {
+    if (userProfile == null) return false;
+    final phone = userProfile!['phone'] as String?;
+    final address = userProfile!['address'] as String?;
+    return phone != null && phone.isNotEmpty && address != null && address.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const FigmaPageBody(
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     return FigmaPageBody(
       child: Column(
         children: [
@@ -44,7 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
           const SizedBox(height: 32),
           
-          // Tombol Logout yang didesain ulang agar lebih elegan
+          // Tombol Logout
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -60,22 +99,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
                 ),
               ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Tombol simulasi (Hanya untuk keperluan demonstrasi ke mentor)
-          TextButton.icon(
-            onPressed: () {
-              setState(() {
-                isProfileFilled = !isProfileFilled;
-              });
-            },
-            icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.grayText),
-            label: Text(
-              isProfileFilled ? 'Simulasikan Mode Kosong' : 'Simulasikan Mode Terisi',
-              style: const TextStyle(color: AppColors.grayText),
             ),
           ),
         ],
@@ -131,12 +154,7 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 28),
           ReusableButton(
             label: 'Lengkapi Profil Sekarang',
-            onPressed: () {
-              // Simulasi: Mengisi data
-              setState(() {
-                isProfileFilled = true;
-              });
-            },
+            onPressed: _showEditProfileSheet,
             borderRadius: 12,
             height: 50,
           ),
@@ -147,6 +165,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// Tampilan ketika data profil sudah terisi
   Widget _buildFilledProfile(BuildContext context) {
+    final name = userProfile?['name'] ?? 'M. Fattah Syauqi';
+    final email = userProfile?['email'] ?? 'msyauqi559@gmail.com';
+    final phone = userProfile?['phone'] ?? '-';
+    final gender = userProfile?['gender'] ?? 'Laki - Laki';
+    final address = userProfile?['address'] ?? '-';
+    final photo = userProfile?['photo_path'] as String?;
+    final String displayPhoto = (photo == null || photo.isEmpty) ? AppAssets.user : photo;
+
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.topCenter,
@@ -170,7 +196,7 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             children: [
               Text(
-                'M. Fattah Syauqi',
+                name,
                 style: Theme.of(context)
                     .textTheme
                     .headlineMedium
@@ -202,36 +228,39 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 28),
-              const Padding(
-                padding: EdgeInsets.only(left: 22, right: 22),
+              Padding(
+                padding: const EdgeInsets.only(left: 22, right: 22),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    SectionHeader(title: 'Detail Personal'),
-                    Icon(Icons.edit_rounded, size: 18, color: AppColors.primary),
+                    const SectionHeader(title: 'Detail Personal'),
+                    IconButton(
+                      icon: const Icon(Icons.edit_rounded, size: 18, color: AppColors.primary),
+                      onPressed: _showEditProfileSheet,
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 12),
-              const _DetailRow(
+              _DetailRow(
                 icon: Icons.alternate_email_rounded,
                 label: 'Email',
-                value: 'msyauqi559@gmail.com',
+                value: email,
               ),
-              const _DetailRow(
+              _DetailRow(
                 icon: Icons.phone_android_rounded,
                 label: 'Nomor Telp',
-                value: '085-856-238-817',
+                value: phone,
               ),
-              const _DetailRow(
+              _DetailRow(
                 icon: Icons.male_rounded,
                 label: 'Gender',
-                value: 'Laki - laki',
+                value: gender,
               ),
-              const _DetailRow(
+              _DetailRow(
                 icon: Icons.location_on_rounded,
                 label: 'Alamat Pengiriman',
-                value: 'Jl. Imam Bonjol No. 19, Pasuruan, Jawa Timur',
+                value: address,
                 isLast: true,
               ),
             ],
@@ -252,13 +281,225 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
           ),
-          child: const ReusableImage(
-            imagePath: AppAssets.user,
+          child: ReusableImage(
+            imagePath: displayPhoto,
             fit: BoxFit.cover,
             borderRadius: 60,
           ),
         ),
       ],
+    );
+  }
+
+  void _showEditProfileSheet() {
+    final nameController = TextEditingController(text: userProfile?['name'] ?? '');
+    final phoneController = TextEditingController(text: userProfile?['phone'] ?? '');
+    final addressController = TextEditingController(text: userProfile?['address'] ?? '');
+    String selectedGender = userProfile?['gender'] ?? 'Laki - laki';
+    String selectedPhoto = userProfile?['photo_path'] ?? '';
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.fromLTRB(
+                20, 
+                20, 
+                20, 
+                MediaQuery.of(context).viewInsets.bottom + 20
+              ),
+              decoration: const BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(28),
+                ),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Lengkapi / Edit Profil',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Avatar preset selection
+                    const Text(
+                      'Pilih Foto Profil',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildPhotoOption(AppAssets.user, selectedPhoto, () {
+                          setModalState(() => selectedPhoto = AppAssets.user);
+                        }),
+                        _buildPhotoOption(AppAssets.courier, selectedPhoto, () {
+                          setModalState(() => selectedPhoto = AppAssets.courier);
+                        }),
+                        _buildPhotoOption(AppAssets.logo, selectedPhoto, () {
+                          setModalState(() => selectedPhoto = AppAssets.logo);
+                        }),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Name Field
+                    const Text('Nama Lengkap', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    AppTextField(
+                      controller: nameController,
+                      hintText: 'Nama Anda',
+                      borderColor: AppColors.primary,
+                      borderRadius: 12,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Phone Field
+                    const Text('Nomor Telepon', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    AppTextField(
+                      controller: phoneController,
+                      hintText: 'Contoh: 085856238817',
+                      keyboardType: TextInputType.phone,
+                      borderColor: AppColors.primary,
+                      borderRadius: 12,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Gender Selection
+                    const Text('Gender', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    RadioGroup<String>(
+                      groupValue: selectedGender,
+                      onChanged: (val) {
+                        if (val != null) {
+                          setModalState(() => selectedGender = val);
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text('Laki-laki', style: TextStyle(fontSize: 13)),
+                              value: 'Laki - laki',
+                              activeColor: AppColors.primary,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text('Perempuan', style: TextStyle(fontSize: 13)),
+                              value: 'Perempuan',
+                              activeColor: AppColors.primary,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Address Field
+                    const Text('Alamat Lengkap Pengiriman', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    AppTextField(
+                      controller: addressController,
+                      hintText: 'Alamat pengiriman makanan Anda...',
+                      borderColor: AppColors.primary,
+                      maxLines: 2,
+                      borderRadius: 12,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Save Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ReusableButton(
+                        label: 'Simpan Perubahan',
+                        onPressed: () async {
+                          if (nameController.text.trim().isEmpty ||
+                              phoneController.text.trim().isEmpty ||
+                              addressController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Semua field wajib diisi!'),
+                                backgroundColor: AppColors.danger,
+                              ),
+                            );
+                            return;
+                          }
+                          await DatabaseHelper.instance.updateUserProfile(
+                            userId: loggedInUserId!,
+                            name: nameController.text,
+                            phone: phoneController.text,
+                            gender: selectedGender,
+                            address: addressController.text,
+                            photoPath: selectedPhoto,
+                          );
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          _loadProfile();
+                        },
+                        borderRadius: 12,
+                        height: 50,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPhotoOption(String assetPath, String selectedPath, VoidCallback onTap) {
+    final bool isSelected = selectedPath == assetPath || (selectedPath.isEmpty && assetPath == AppAssets.user);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            width: 3,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(40),
+          child: Image.asset(
+            assetPath,
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
     );
   }
 

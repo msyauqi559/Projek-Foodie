@@ -4,6 +4,7 @@ import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
 import '../models/food_item.dart';
 import '../services/database_helper.dart';
+import '../widgets/reusable_image.dart';
 
 class AdminMenuFormPage extends StatefulWidget {
   final FoodItem? foodToEdit;
@@ -23,8 +24,8 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
   late TextEditingController _descCtrl;
   late TextEditingController _priceCtrl;
   late TextEditingController _tagsCtrl;
+  late TextEditingController _imageCtrl;
   
-  String _selectedImage = AppAssets.salad; // Default fallback
   bool _isLoading = false;
 
   @override
@@ -37,9 +38,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     _descCtrl = TextEditingController(text: f?.description ?? '');
     _priceCtrl = TextEditingController(text: f?.price.toStringAsFixed(0) ?? '');
     _tagsCtrl = TextEditingController(text: f?.tags.join(',') ?? 'Favorite,Gurih');
-    if (f != null) {
-      _selectedImage = f.imagePath;
-    }
+    _imageCtrl = TextEditingController(text: f?.imagePath ?? AppAssets.salad);
   }
 
   @override
@@ -50,6 +49,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     _descCtrl.dispose();
     _priceCtrl.dispose();
     _tagsCtrl.dispose();
+    _imageCtrl.dispose();
     super.dispose();
   }
 
@@ -65,7 +65,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
       category: _catCtrl.text,
       address: _addrCtrl.text,
       description: _descCtrl.text,
-      imagePath: _selectedImage,
+      imagePath: _imageCtrl.text.trim().isEmpty ? AppAssets.salad : _imageCtrl.text.trim(),
       price: double.parse(_priceCtrl.text),
       rating: widget.foodToEdit?.rating ?? 5.0, // Default rating untuk menu baru
       deliveryTime: widget.foodToEdit?.deliveryTime ?? '15 min',
@@ -83,6 +83,20 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     if (mounted) {
       Navigator.pop(context);
     }
+  }
+
+  Widget _buildPresetChip(String label, String path) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ActionChip(
+        label: Text(label, style: const TextStyle(fontSize: 12)),
+        backgroundColor: AppColors.muted,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        onPressed: () {
+          _imageCtrl.text = path;
+        },
+      ),
+    );
   }
 
   @override
@@ -104,7 +118,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                 padding: const EdgeInsets.all(24),
                 children: [
                   const Text('Detail Makanan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   
                   // Nama
                   TextFormField(
@@ -119,7 +133,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
 
                   // Kategori
                   DropdownButtonFormField<String>(
-                    value: ['Nusantara', 'Sehat', 'Fastfood'].contains(_catCtrl.text) ? _catCtrl.text : 'Nusantara',
+                    initialValue: ['Nusantara', 'Sehat', 'Fastfood'].contains(_catCtrl.text) ? _catCtrl.text : 'Nusantara',
                     decoration: InputDecoration(
                       labelText: 'Kategori',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -170,12 +184,75 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                   // Deskripsi
                   TextFormField(
                     controller: _descCtrl,
-                    maxLines: 4,
+                    maxLines: 3,
                     decoration: InputDecoration(
                       labelText: 'Deskripsi Lengkap',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
+                  const SizedBox(height: 20),
+
+                  // Bagian Gambar
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  const Text('Gambar Makanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  const SizedBox(height: 12),
+                  
+                  // Live image preview
+                  Center(
+                    child: Container(
+                      width: 160,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _imageCtrl,
+                        builder: (context, value, child) {
+                          final path = value.text.trim();
+                          return ReusableImage(
+                            imagePath: path.isEmpty ? AppAssets.salad : path,
+                            width: double.infinity,
+                            height: double.infinity,
+                            borderRadius: 10,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  TextFormField(
+                    controller: _imageCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'URL Gambar / Jalur Aset Lokal',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.clear_rounded),
+                        onPressed: () => _imageCtrl.clear(),
+                      ),
+                    ),
+                    validator: (v) => v!.isEmpty ? 'Gambar wajib ditentukan' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Preset Aset Lokal:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const SizedBox(height: 6),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildPresetChip('Mie Ayam', AppAssets.mieAyam),
+                        _buildPresetChip('Rendang', AppAssets.rendang),
+                        _buildPresetChip('Rawon', AppAssets.rawon),
+                        _buildPresetChip('Bakso', AppAssets.bakso),
+                        _buildPresetChip('Salad', AppAssets.salad),
+                        _buildPresetChip('Lontong Balap', AppAssets.lontongBalap),
+                        _buildPresetChip('Kebab', AppAssets.kebab),
+                      ],
+                    ),
+                  ),
+                  
                   const SizedBox(height: 32),
 
                   SizedBox(
@@ -192,6 +269,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

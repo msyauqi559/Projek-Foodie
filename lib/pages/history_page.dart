@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
@@ -27,13 +28,13 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   void initState() {
     super.initState();
-    _loadOrders();
+    _ordersFuture = _loadOrders();
   }
 
-  void _loadOrders() {
-    setState(() {
-      _ordersFuture = DatabaseHelper.instance.getAllPesanan();
-    });
+  Future<List<OrderHistoryItem>> _loadOrders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id') ?? 2; // Default ke 2 jika session hilang
+    return DatabaseHelper.instance.getPesananByUserId(userId);
   }
 
   @override

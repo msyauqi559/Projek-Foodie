@@ -84,6 +84,29 @@ class _CategoryPageState extends State<CategoryPage> {
 
               final allMenus = snapshot.data ?? [];
               
+              if (allMenus.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 60),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.restaurant_rounded, size: 54, color: AppColors.primary),
+                      SizedBox(height: 16),
+                      Text(
+                        'Belum ada menu makanan.',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Silakan tunggu admin mengunggah menu lezat segera.',
+                        style: TextStyle(color: AppColors.grayText, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
+              
               // Filter data berdasarkan SQLite records
               final nusantaraFoods = allMenus.where((m) => m.category == 'Nusantara').toList();
               final healthyFoods = allMenus.where((m) => m.category == 'Sehat').toList();

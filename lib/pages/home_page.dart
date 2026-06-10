@@ -78,6 +78,84 @@ class _HomePageState extends State<HomePage> {
         // ── State 3: Data Ready ──
         final List<FoodItem> allMenus = snapshot.data ?? [];
 
+        if (allMenus.isEmpty) {
+          return FigmaPageBody(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header: Logo + Notifikasi ──
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Expanded(child: HomeBrandHeader()),
+                    NotificationButton(
+                      onTap: () => NotificationEmptySheet.show(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // ── Search Bar ──
+                const AppTextField(
+                  hintText: 'Cari menu....',
+                  prefixIcon: Icons.search_rounded,
+                  borderColor: AppColors.primary,
+                  borderRadius: AppDimensions.homeSearchRadius,
+                  readOnly: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 16,
+                  ),
+                ),
+                const SizedBox(height: 60),
+
+                // ── Beautiful Empty State Illustration & Message ──
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 140,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.restaurant_rounded,
+                          size: 64,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      Text(
+                        'Menu Belum Tersedia',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          'Wah, saat ini toko kami belum menambahkan menu makanan baru. Silakan tunggu admin mengunggah menu lezat segera!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.grayText,
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         // Ambil 3 menu pertama untuk tampilan highlight
         final List<FoodItem> highlightMenus = allMenus.take(3).toList();
 
@@ -149,7 +227,7 @@ class _HomePageState extends State<HomePage> {
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
                   itemCount: allMenus.length > 5 ? 5 : allMenus.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(width: AppSpacing.sm),
                   itemBuilder: (context, index) {
                     final food = allMenus[index];
@@ -206,7 +284,7 @@ class _HomePageState extends State<HomePage> {
                           scrollDirection: Axis.horizontal,
                           padding: EdgeInsets.zero,
                           itemCount: entry.value.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               const SizedBox(width: AppSpacing.sm),
                           itemBuilder: (context, i) {
                             final food = entry.value[i];

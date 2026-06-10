@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
@@ -24,6 +25,7 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   int quantity = 1;
+  int? loggedInUserId;
 
   static const double _promoDiscount = 2000;
   static const double _shippingCost = 5000;
@@ -34,11 +36,25 @@ class _CartPageState extends State<CartPage> {
   double get _total => _subtotal - _promoDiscount + _shippingCost + _tax;
 
   @override
+  void initState() {
+    super.initState();
+    _loadUserSession();
+  }
+
+  Future<void> _loadUserSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      loggedInUserId = prefs.getInt('user_id');
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final OrderHistoryItem previewOrder = OrderHistoryItem(
       id: 'cart-preview',
       food: widget.food,
       quantity: quantity,
+      userId: loggedInUserId ?? 2, // Default ke 2 (Fattah Syauqi) jika belum dimuat
       dateLabel: 'Today',
       statusLabel: 'Berhasil',
       isSuccess: true,

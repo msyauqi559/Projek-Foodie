@@ -31,19 +31,33 @@ class ReusableImage extends StatelessWidget {
         color: borderRadius == 0 ? Colors.transparent : AppColors.muted,
         height: height,
         width: width,
-        child: Image.asset(
-          imagePath,
-          fit: fit,
-          alignment: alignment,
-          errorBuilder: (_, error, stackTrace) {
-            return const Center(
-              child: Icon(
-                Icons.image_not_supported_rounded,
-                color: AppColors.textSecondary,
+        child: imagePath.startsWith('http')
+            ? Image.network(
+                imagePath,
+                fit: fit,
+                alignment: alignment,
+                errorBuilder: (_, error, stackTrace) {
+                  return const Center(
+                    child: Icon(
+                      Icons.image_not_supported_rounded,
+                      color: AppColors.textSecondary,
+                    ),
+                  );
+                },
+              )
+            : Image.asset(
+                imagePath,
+                fit: fit,
+                alignment: alignment,
+                errorBuilder: (_, error, stackTrace) {
+                  return const Center(
+                    child: Icon(
+                      Icons.image_not_supported_rounded,
+                      color: AppColors.textSecondary,
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
       ),
     );
 

@@ -19,6 +19,7 @@ class AppTextField extends StatelessWidget {
     this.fillColor = AppColors.card,
     this.contentPadding,
     this.keyboardType,
+    this.maxLines = 1,
   });
 
   final String hintText;
@@ -34,6 +35,7 @@ class AppTextField extends StatelessWidget {
   final Color fillColor;
   final EdgeInsetsGeometry? contentPadding;
   final TextInputType? keyboardType;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +45,7 @@ class AppTextField extends StatelessWidget {
       obscureText: obscureText,
       readOnly: readOnly,
       onTap: onTap,
+      maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: Theme.of(

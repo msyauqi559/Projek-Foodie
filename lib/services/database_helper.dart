@@ -1,81 +1,108 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-import '../constants/app_assets.dart';
 import '../models/food_item.dart';
 import '../models/order_history_item.dart';
 
-/// DatabaseHelper — Kelas inti untuk mengelola koneksi SQLite.
-///
-/// Menggunakan **Singleton Pattern** agar hanya ada 1 instance database
-/// di seluruh aplikasi. Ini mencegah konflik jika beberapa halaman
-/// mengakses database secara bersamaan.
-///
-/// Berisi:
-/// - Inisialisasi database & pembuatan tabel
-/// - CRUD untuk tabel `tb_menu` (Master)
-/// - CRUD untuk tabel `tb_pesanan` (Transaksi)
-/// - Seed data awal (menu default)
+/// ============================================================================
+/// DATABASE HELPER (SQLITE) — VERSI 5 (DENGAN DUKUNGAN PLATFORM FALLBACK)
+/// ============================================================================
 class DatabaseHelper {
-  // ══════════════════════════════════════════════════════════
-  // SINGLETON PATTERN
-  // ══════════════════════════════════════════════════════════
-
-  /// Instance tunggal — dipanggil: DatabaseHelper.instance
   static final DatabaseHelper instance = DatabaseHelper._init();
-
-  /// Variabel private untuk menyimpan referensi database.
-  /// Nullable (?) karena belum dibuat sampai pertama kali dipanggil.
   static Database? _database;
 
-  /// Constructor private — tidak bisa di-new dari luar class.
   DatabaseHelper._init();
 
-  // ══════════════════════════════════════════════════════════
-  // INISIALISASI DATABASE
-  // ══════════════════════════════════════════════════════════
+  // Helper untuk mendeteksi apakah platform saat ini membutuhkan fallback memori.
+  // Digunakan untuk Web/Chrome dan platform Desktop (Linux/macOS/Windows) agar tidak crash.
+  bool get _useMemoryFallback {
+    if (kIsWeb) return true;
+    try {
+      return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+    } catch (_) {
+      return false;
+    }
+  }
 
-  /// Getter database dengan lazy initialization.
-  ///
-  /// Cara kerja:
-  /// 1. Cek apakah [_database] sudah ada → jika ya, langsung return.
-  /// 2. Jika belum → panggil [_initDB] untuk membuat database baru.
-  /// 3. Simpan hasilnya ke [_database] agar tidak perlu buat ulang.
+  // ── PLATFORM FALLBACK DATA MEMORY ──
+  static final List<Map<String, dynamic>> _webUsers = [
+    {
+      'id': 1,
+      'name': 'Admin Foodie',
+      'email': 'admin@gmail.com',
+      'password': 'admin123',
+      'phone': '081234567890',
+      'gender': 'Laki - laki',
+      'address': 'Kantor Pusat Foodie',
+      'photo_path': '',
+    },
+    {
+      'id': 2,
+      'name': 'M. Fattah Syauqi',
+      'email': 'msyauqi559@gmail.com',
+      'password': 'user123',
+      'phone': '085856238817',
+      'gender': 'Laki - laki',
+      'address': 'Jl. Imam Bonjol No. 19, Pasuruan, Jawa Timur',
+      'photo_path': '',
+    }
+  ];
+  static final List<Map<String, dynamic>> _webMenus = [];
+  static final List<Map<String, dynamic>> _webOrders = [];
+  static int _webUserIdCounter = 3;
+  static int _webMenuIdCounter = 1;
+  static int _webOrderIdCounter = 1;
+
   Future<Database> get database async {
+    if (_useMemoryFallback) {
+      throw UnsupportedError('SQLite tidak didukung di platform ini. Gunakan fallback memory.');
+    }
     if (_database != null) return _database!;
     _database = await _initDB('foodie.db');
     return _database!;
   }
 
-  /// Membuat/membuka file database di lokasi default device.
-  ///
-  /// [getDatabasesPath()] → mendapatkan path folder database device
-  ///   - Android: /data/data/<package>/databases/
-  ///   - iOS: Documents directory
-  /// [join()] → menggabungkan path folder + nama file → full path
-  /// [openDatabase()] → membuka DB jika ada, atau buat baru jika belum
-  ///   - [version: 1] → versi skema database
-  ///   - [onCreate] → callback yang dipanggil HANYA saat DB pertama kali dibuat
   Future<Database> _initDB(String fileName) async {
     final String dbPath = await getDatabasesPath();
     final String path = join(dbPath, fileName);
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 5, // Naik ke versi 5 untuk menghapus menu dummy
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
-  /// Callback pembuatan tabel — dipanggil sekali saat database baru dibuat.
-  ///
-  /// Membuat 2 tabel:
-  /// 1. [tb_menu] — Tabel Master: menyimpan data menu makanan
-  /// 2. [tb_pesanan] — Tabel Transaksi: menyimpan data pesanan
-  ///
-  /// Setelah tabel dibuat, langsung isi data awal (seed) agar app tidak kosong.
+  /// Fungsi Pembaruan Skema Database (`onUpgrade`).
+  /// Menghapus dan membuat ulang seluruh tabel untuk menjamin konsistensi skema.
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 5) {
+      await db.execute('DROP TABLE IF EXISTS tb_user');
+      await db.execute('DROP TABLE IF EXISTS tb_pesanan');
+      await db.execute('DROP TABLE IF EXISTS tb_menu');
+      await _createDB(db, newVersion);
+    }
+  }
+
   Future<void> _createDB(Database db, int version) async {
-    // ── Tabel Master: tb_menu ──
+    // ── TABEL USER (Auth + Profil Dinamis) ──
+    await db.execute('''
+      CREATE TABLE tb_user (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        phone TEXT,
+        gender TEXT,
+        address TEXT,
+        photo_path TEXT
+      )
+    ''');
+
+    // ── TABEL MASTER: tb_menu (Katalog Menu) ──
     await db.execute('''
       CREATE TABLE tb_menu (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,14 +120,13 @@ class DatabaseHelper {
       )
     ''');
 
-    // ── Tabel Transaksi: tb_pesanan ──
-    // FOREIGN KEY: menu_id merujuk ke tb_menu.id
-    // Artinya setiap pesanan HARUS punya menu yang valid di tb_menu
+    // ── TABEL TRANSAKSI: tb_pesanan (Riwayat Order) ──
     await db.execute('''
       CREATE TABLE tb_pesanan (
         id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id        INTEGER NOT NULL,
         menu_id        INTEGER NOT NULL,
-        quantity        INTEGER NOT NULL,
+        quantity       INTEGER NOT NULL,
         date_label     TEXT    NOT NULL,
         status_label   TEXT    NOT NULL,
         is_success     INTEGER NOT NULL,
@@ -109,262 +135,76 @@ class DatabaseHelper {
         shipping_cost  REAL    NOT NULL,
         tax            REAL    NOT NULL,
         promo_code     TEXT    NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES tb_user (id)
+          ON DELETE CASCADE,
         FOREIGN KEY (menu_id) REFERENCES tb_menu (id)
           ON DELETE CASCADE
       )
     ''');
 
-    // ── Seed data awal ──
-    await _seedMenuData(db);
-    await _seedPesananData(db);
+    await _seedUserData(db);
   }
 
-  // ══════════════════════════════════════════════════════════
-  // SEED DATA (Data Awal)
-  // ══════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  // SEEDERS (Pengisi Data Awal Native)
+  // ════════════════════════════════════════════════════════════════════════════
 
-  /// Mengisi tb_menu dengan data default menu Foodie.
-  /// Data ini sama dengan yang sebelumnya ada di DummyDataService.
-  Future<void> _seedMenuData(Database db) async {
-    final List<Map<String, dynamic>> menus = [
-      {
-        'name': 'Mie Ayam Tunggal Rasa',
-        'category': 'Nusantara',
-        'address': 'Jl. Imam Bonjol, No.19 Pasuruan',
-        'description':
-            'Masakan Indonesia yang terbuat dari mi kuning direbus mendidih kemudian ditaburi saus kecap khusus beserta daging ayam dan sayuran.',
-        'image_path': AppAssets.mieAyam,
-        'price': 15000.0,
-        'rating': 4.9,
-        'delivery_time': '12 min',
-        'distance': '900 m',
-        'calories': 340,
-        'tags': 'Favorite,Gurih,Fresh',
-      },
-      {
-        'name': 'Rendang Daging',
-        'category': 'Nusantara',
-        'address': 'Jl. Imam Bonjol, No.19 Pasuruan',
-        'description':
-            'Rendang dengan bumbu rempah kaya rasa, daging empuk, dan plating khas Nusantara yang menggugah selera.',
-        'image_path': AppAssets.rendang,
-        'price': 45000.0,
-        'rating': 4.9,
-        'delivery_time': '20 min',
-        'distance': '1.8 km',
-        'calories': 420,
-        'tags': 'Best Seller,Pedas,Bumbu Pekat',
-      },
-      {
-        'name': 'Rawon',
-        'category': 'Nusantara',
-        'address': 'Jl. Imam Bonjol, No.19 Pasuruan',
-        'description':
-            'Rawon khas Jawa Timur dengan kuah hitam pekat, daging empuk, dan pelengkap telur serta sambal.',
-        'image_path': AppAssets.rawon,
-        'price': 20000.0,
-        'rating': 4.9,
-        'delivery_time': '18 min',
-        'distance': '1.1 km',
-        'calories': 390,
-        'tags': 'Kuah Gurih,Lokal,Hangat',
-      },
-      {
-        'name': 'Bakso solo',
-        'category': 'Nusantara',
-        'address': 'Jl. Diponegoro Kota pasuruan',
-        'description':
-            'Bakso solo dengan kuah kaldu gurih, mie, dan potongan bakso sapi yang lembut.',
-        'image_path': AppAssets.bakso,
-        'price': 15000.0,
-        'rating': 4.8,
-        'delivery_time': '15 min',
-        'distance': '1.2 km',
-        'calories': 360,
-        'tags': 'Hangat,Laris,Comfort Food',
-      },
-      {
-        'name': 'Salad',
-        'category': 'Sehat',
-        'address': 'Jl. Imam Bonjol, No.19 Pasuruan',
-        'description':
-            'Salad sayur segar dengan telur, tomat, timun, dan dressing ringan yang cocok untuk makanan sehat.',
-        'image_path': AppAssets.salad,
-        'price': 25000.0,
-        'rating': 4.9,
-        'delivery_time': '10 min',
-        'distance': '700 m',
-        'calories': 190,
-        'tags': 'Low Calorie,Fresh,Diet Friendly',
-      },
-      {
-        'name': 'Gado - gado',
-        'category': 'Sehat',
-        'address': 'Jl. Imam Bonjol, No.19 Pasuruan',
-        'description':
-            'Gado-gado dengan sayuran rebus, telur, tahu, dan saus kacang gurih yang autentik.',
-        'image_path': AppAssets.lontongBalap,
-        'price': 12000.0,
-        'rating': 4.9,
-        'delivery_time': '13 min',
-        'distance': '850 m',
-        'calories': 280,
-        'tags': 'Sehat,Murah,Sayur Lengkap',
-      },
-      {
-        'name': 'Buah buahan kemasan (bebas request)',
-        'category': 'Sehat',
-        'address': 'bebas request',
-        'description':
-            'Buah segar dalam kemasan praktis. Isi bisa disesuaikan sesuai request selama stok tersedia.',
-        'image_path': AppAssets.packagedFruit,
-        'price': 15000.0,
-        'rating': 4.9,
-        'delivery_time': '9 min',
-        'distance': '600 m',
-        'calories': 150,
-        'tags': 'Fresh,Praktis,Bebas Request',
-      },
-      {
-        'name': 'Lontong Balap',
-        'category': 'Fastfood',
-        'address': 'Jl. Imam Bonjol, No.19 Pasuruan',
-        'description':
-            'Lontong balap dengan tahu, lentho, tauge, dan kuah gurih khas Surabaya.',
-        'image_path': AppAssets.lontongBalap,
-        'price': 15000.0,
-        'rating': 4.9,
-        'delivery_time': '14 min',
-        'distance': '1.0 km',
-        'calories': 310,
-        'tags': 'Cepat Saji,Gurih,Lokal',
-      },
-      {
-        'name': 'Fastfood Special',
-        'category': 'Fastfood',
-        'address': 'Jl. Imam Bonjol, No.19 Pasuruan',
-        'description':
-            'Menu cepat saji dengan rasa gurih dan penyajian cepat untuk makan praktis.',
-        'image_path': AppAssets.kebab,
-        'price': 18000.0,
-        'rating': 4.8,
-        'delivery_time': '11 min',
-        'distance': '950 m',
-        'calories': 280,
-        'tags': 'Cepat,Praktis,Camilan',
-      },
-      {
-        'name': 'Buah buahan kemasan',
-        'category': 'Fastfood',
-        'address': 'bebas request',
-        'description':
-            'Buah segar praktis siap santap untuk camilan cepat saat beraktivitas.',
-        'image_path': AppAssets.packagedFruit,
-        'price': 15000.0,
-        'rating': 4.9,
-        'delivery_time': '9 min',
-        'distance': '600 m',
-        'calories': 150,
-        'tags': 'Fresh,Cepat,Praktis',
-      },
-    ];
+  Future<void> _seedUserData(Database db) async {
+    // 1. Akun Admin
+    await db.insert('tb_user', {
+      'id': 1,
+      'name': 'Admin Foodie',
+      'email': 'admin@gmail.com',
+      'password': 'admin123',
+      'phone': '081234567890',
+      'gender': 'Laki - laki',
+      'address': 'Kantor Pusat Foodie',
+      'photo_path': '',
+    });
 
-    // Batch insert → lebih cepat daripada insert satu-satu
-    final Batch batch = db.batch();
-    for (final menu in menus) {
-      batch.insert('tb_menu', menu);
-    }
-    await batch.commit(noResult: true);
+    // 2. Akun User Biasa (Fattah Syauqi)
+    await db.insert('tb_user', {
+      'id': 2,
+      'name': 'M. Fattah Syauqi',
+      'email': 'msyauqi559@gmail.com',
+      'password': 'user123',
+      'phone': '085856238817',
+      'gender': 'Laki - laki',
+      'address': 'Jl. Imam Bonjol No. 19, Pasuruan, Jawa Timur',
+      'photo_path': '',
+    });
   }
 
-  /// Mengisi tb_pesanan dengan beberapa data riwayat pesanan awal.
-  Future<void> _seedPesananData(Database db) async {
-    final List<Map<String, dynamic>> pesanan = [
-      {
-        'menu_id': 1, // Mie Ayam (id=1 di tb_menu)
-        'quantity': 1,
-        'date_label': 'Yesterday',
-        'status_label': 'Berhasil',
-        'is_success': 1,
-        'total': 19500.0,
-        'promo_discount': 2000.0,
-        'shipping_cost': 5000.0,
-        'tax': 1500.0,
-        'promo_code': '872008',
-      },
-      {
-        'menu_id': 2, // Rendang (id=2 di tb_menu)
-        'quantity': 2,
-        'date_label': '4 Day Ago',
-        'status_label': 'GAGAL',
-        'is_success': 0,
-        'total': 90000.0,
-        'promo_discount': 0.0,
-        'shipping_cost': 5000.0,
-        'tax': 3000.0,
-        'promo_code': '872008',
-      },
-      {
-        'menu_id': 6, // Gado-gado (id=6 di tb_menu)
-        'quantity': 5,
-        'date_label': 'Today',
-        'status_label': 'GAGAL',
-        'is_success': 0,
-        'total': 60000.0,
-        'promo_discount': 0.0,
-        'shipping_cost': 5000.0,
-        'tax': 6000.0,
-        'promo_code': '872008',
-      },
-      {
-        'menu_id': 6, // Gado-gado (id=6 di tb_menu)
-        'quantity': 1,
-        'date_label': 'Today',
-        'status_label': 'Berhasil',
-        'is_success': 1,
-        'total': 12000.0,
-        'promo_discount': 0.0,
-        'shipping_cost': 5000.0,
-        'tax': 1200.0,
-        'promo_code': '872008',
-      },
-    ];
+  // ════════════════════════════════════════════════════════════════════════════
+  // CRUD — tb_menu
+  // ════════════════════════════════════════════════════════════════════════════
 
-    final Batch batch = db.batch();
-    for (final p in pesanan) {
-      batch.insert('tb_pesanan', p);
-    }
-    await batch.commit(noResult: true);
-  }
-
-  // ══════════════════════════════════════════════════════════
-  // CRUD — TABEL MASTER: tb_menu
-  // ══════════════════════════════════════════════════════════
-
-  /// **CREATE** — Menambahkan menu baru ke tb_menu.
-  ///
-  /// [food.toMap()] mengkonversi FoodItem → Map sesuai kolom tabel.
-  /// Mengembalikan ID baris yang baru di-insert.
   Future<int> insertMenu(FoodItem food) async {
+    if (_useMemoryFallback) {
+      final id = _webMenuIdCounter++;
+      final map = food.toMap();
+      map['id'] = id;
+      _webMenus.add(map);
+      return id;
+    }
     final Database db = await database;
     return await db.insert('tb_menu', food.toMap());
   }
 
-  /// **READ ALL** — Mengambil semua data dari tb_menu.
-  ///
-  /// [db.query('tb_menu')] = SELECT * FROM tb_menu
-  /// Setiap row (Map) dikonversi ke FoodItem dengan [fromMap()].
   Future<List<FoodItem>> getAllMenus() async {
+    if (_useMemoryFallback) {
+      return _webMenus.map((map) => FoodItem.fromMap(map)).toList();
+    }
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query('tb_menu');
     return maps.map((map) => FoodItem.fromMap(map)).toList();
   }
 
-  /// **READ BY CATEGORY** — Mengambil menu berdasarkan kategori.
-  ///
-  /// [where: 'category = ?'] → filter berdasarkan kolom category
-  /// [whereArgs: [category]] → nilai parameter (mencegah SQL injection)
   Future<List<FoodItem>> getMenusByCategory(String category) async {
+    if (_useMemoryFallback) {
+      final filtered = _webMenus.where((m) => m['category'] == category).toList();
+      return filtered.map((map) => FoodItem.fromMap(map)).toList();
+    }
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'tb_menu',
@@ -374,8 +214,12 @@ class DatabaseHelper {
     return maps.map((map) => FoodItem.fromMap(map)).toList();
   }
 
-  /// **READ BY ID** — Mengambil 1 menu berdasarkan ID.
   Future<FoodItem?> getMenuById(int id) async {
+    if (_useMemoryFallback) {
+      final match = _webMenus.where((m) => m['id'] == id).firstOrNull;
+      if (match == null) return null;
+      return FoodItem.fromMap(match);
+    }
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'tb_menu',
@@ -386,11 +230,17 @@ class DatabaseHelper {
     return FoodItem.fromMap(maps.first);
   }
 
-  /// **UPDATE** — Mengubah data menu yang sudah ada.
-  ///
-  /// [where: 'id = ?'] → hanya ubah baris dengan ID tertentu
-  /// Mengembalikan jumlah baris yang terpengaruh (seharusnya 1).
   Future<int> updateMenu(FoodItem food) async {
+    if (_useMemoryFallback) {
+      final index = _webMenus.indexWhere((m) => m['id'] == food.dbId);
+      if (index != -1) {
+        final map = food.toMap();
+        map['id'] = food.dbId;
+        _webMenus[index] = map;
+        return 1;
+      }
+      return 0;
+    }
     final Database db = await database;
     return await db.update(
       'tb_menu',
@@ -400,10 +250,13 @@ class DatabaseHelper {
     );
   }
 
-  /// **DELETE** — Menghapus menu berdasarkan ID.
-  ///
-  /// Pesanan terkait di tb_pesanan juga ikut terhapus (ON DELETE CASCADE).
   Future<int> deleteMenu(int id) async {
+    if (_useMemoryFallback) {
+      final countBefore = _webMenus.length;
+      _webMenus.removeWhere((m) => m['id'] == id);
+      _webOrders.removeWhere((o) => o['menu_id'] == id);
+      return countBefore - _webMenus.length;
+    }
     final Database db = await database;
     return await db.delete(
       'tb_menu',
@@ -412,29 +265,54 @@ class DatabaseHelper {
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // CRUD — TABEL TRANSAKSI: tb_pesanan
-  // ══════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  // CRUD — tb_pesanan (Dengan Info User)
+  // ════════════════════════════════════════════════════════════════════════════
 
-  /// **CREATE PESANAN** — Menyimpan pesanan baru ke tb_pesanan.
   Future<int> insertPesanan(OrderHistoryItem order) async {
+    if (_useMemoryFallback) {
+      final id = _webOrderIdCounter++;
+      final map = order.toMap();
+      map['id'] = id;
+      _webOrders.add(map);
+      return id;
+    }
     final Database db = await database;
     return await db.insert('tb_pesanan', order.toMap());
   }
 
-  /// **READ ALL PESANAN** — Mengambil semua pesanan beserta data menu-nya.
-  ///
-  /// Menggunakan JOIN antara tb_pesanan dan tb_menu:
-  /// - `p.*` = semua kolom pesanan
-  /// - `m.name AS m_name` dst = kolom menu dengan alias prefix 'm_'
-  ///
-  /// Alias diperlukan agar tidak bentrok dengan kolom pesanan (misal: `id`).
-  /// Hasilnya di-sort berdasarkan ID pesanan terbaru (DESC).
+  /// Membaca semua pesanan dari semua user (digunakan oleh ADMIN)
   Future<List<OrderHistoryItem>> getAllPesanan() async {
+    if (_useMemoryFallback) {
+      final List<OrderHistoryItem> list = [];
+      for (final orderMap in _webOrders) {
+        final user = _webUsers.where((u) => u['id'] == orderMap['user_id']).firstOrNull;
+        final menu = _webMenus.where((m) => m['id'] == orderMap['menu_id']).firstOrNull;
+        if (menu != null) {
+          final joinedMap = Map<String, dynamic>.from(orderMap);
+          joinedMap['u_name'] = user?['name'] ?? 'User Umum';
+          joinedMap['m_name'] = menu['name'];
+          joinedMap['m_category'] = menu['category'];
+          joinedMap['m_address'] = menu['address'];
+          joinedMap['m_description'] = menu['description'];
+          joinedMap['m_image_path'] = menu['image_path'];
+          joinedMap['m_price'] = menu['price'];
+          joinedMap['m_rating'] = menu['rating'];
+          joinedMap['m_delivery_time'] = menu['delivery_time'];
+          joinedMap['m_distance'] = menu['distance'];
+          joinedMap['m_calories'] = menu['calories'];
+          joinedMap['m_tags'] = menu['tags'];
+          list.add(OrderHistoryItem.fromMap(joinedMap));
+        }
+      }
+      return list.reversed.toList();
+    }
+    
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT
         p.id,
+        p.user_id,
         p.menu_id,
         p.quantity,
         p.date_label,
@@ -445,6 +323,7 @@ class DatabaseHelper {
         p.shipping_cost,
         p.tax,
         p.promo_code,
+        u.name          AS u_name,
         m.name          AS m_name,
         m.category      AS m_category,
         m.address       AS m_address,
@@ -458,14 +337,63 @@ class DatabaseHelper {
         m.tags          AS m_tags
       FROM tb_pesanan p
       INNER JOIN tb_menu m ON p.menu_id = m.id
+      LEFT JOIN tb_user u ON p.user_id = u.id
       ORDER BY p.id DESC
     ''');
 
     return maps.map((map) => OrderHistoryItem.fromMap(map)).toList();
   }
 
-  /// **DELETE PESANAN** — Menghapus pesanan berdasarkan ID.
+  /// Membaca pesanan milik user tertentu (digunakan oleh USER pada HistoryPage)
+  Future<List<OrderHistoryItem>> getPesananByUserId(int userId) async {
+    if (_useMemoryFallback) {
+      final all = await getAllPesanan();
+      return all.where((o) => o.userId == userId).toList();
+    }
+    
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT
+        p.id,
+        p.user_id,
+        p.menu_id,
+        p.quantity,
+        p.date_label,
+        p.status_label,
+        p.is_success,
+        p.total,
+        p.promo_discount,
+        p.shipping_cost,
+        p.tax,
+        p.promo_code,
+        u.name          AS u_name,
+        m.name          AS m_name,
+        m.category      AS m_category,
+        m.address       AS m_address,
+        m.description   AS m_description,
+        m.image_path    AS m_image_path,
+        m.price         AS m_price,
+        m.rating        AS m_rating,
+        m.delivery_time AS m_delivery_time,
+        m.distance      AS m_distance,
+        m.calories      AS m_calories,
+        m.tags          AS m_tags
+      FROM tb_pesanan p
+      INNER JOIN tb_menu m ON p.menu_id = m.id
+      LEFT JOIN tb_user u ON p.user_id = u.id
+      WHERE p.user_id = ?
+      ORDER BY p.id DESC
+    ''', [userId]);
+
+    return maps.map((map) => OrderHistoryItem.fromMap(map)).toList();
+  }
+
   Future<int> deletePesanan(int id) async {
+    if (_useMemoryFallback) {
+      final countBefore = _webOrders.length;
+      _webOrders.removeWhere((o) => o['id'] == id);
+      return countBefore - _webOrders.length;
+    }
     final Database db = await database;
     return await db.delete(
       'tb_pesanan',
@@ -474,23 +402,223 @@ class DatabaseHelper {
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // UTILITY
-  // ══════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  // CRUD — tb_user (Registrasi, Login, Profil Dinamis)
+  // ════════════════════════════════════════════════════════════════════════════
 
-  /// Menutup koneksi database. Dipanggil saat app dimatikan.
+  Future<Map<String, dynamic>> registerUser(String name, String email, String password) async {
+    final String cleanEmail = email.trim().toLowerCase();
+
+    if (_useMemoryFallback) {
+      final exists = _webUsers.any((u) => u['email'] == cleanEmail);
+      if (exists) {
+        return {
+          'success': false,
+          'message': 'Email sudah terdaftar. Silakan gunakan email lain.'
+        };
+      }
+      final id = _webUserIdCounter++;
+      _webUsers.add({
+        'id': id,
+        'name': name.trim(),
+        'email': cleanEmail,
+        'password': password,
+        'phone': '',
+        'gender': 'Laki - laki',
+        'address': '',
+        'photo_path': '',
+      });
+      return {
+        'success': true,
+        'id': id,
+        'message': 'Registrasi berhasil. Silakan masuk.'
+      };
+    }
+
+    final Database db = await database;
+    final List<Map<String, dynamic>> existingUser = await db.query(
+      'tb_user',
+      where: 'email = ?',
+      whereArgs: [cleanEmail],
+    );
+
+    if (existingUser.isNotEmpty) {
+      return {
+        'success': false,
+        'message': 'Email sudah terdaftar. Silakan gunakan email lain.'
+      };
+    }
+
+    try {
+      final id = await db.insert('tb_user', {
+        'name': name.trim(),
+        'email': cleanEmail,
+        'password': password,
+        'phone': '',
+        'gender': 'Laki - laki',
+        'address': '',
+        'photo_path': '',
+      });
+      return {
+        'success': true,
+        'id': id,
+        'message': 'Registrasi berhasil. Silakan masuk.'
+      };
+    } catch (e) {
+      if (e.toString().contains('UNIQUE constraint failed')) {
+        return {
+          'success': false,
+          'message': 'Email sudah terdaftar.'
+        };
+      }
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan sistem: $e'
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> loginUser(String email, String password) async {
+    final String cleanEmail = email.trim().toLowerCase();
+
+    if (_useMemoryFallback) {
+      final match = _webUsers.where((u) => u['email'] == cleanEmail && u['password'] == password).firstOrNull;
+      if (match == null) {
+        return {
+          'success': false,
+          'message': 'Email atau password salah.'
+        };
+      }
+      return {
+        'success': true,
+        'user': match,
+        'message': 'Login berhasil.'
+      };
+    }
+
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tb_user',
+      where: 'email = ? AND password = ?',
+      whereArgs: [cleanEmail, password],
+    );
+
+    if (maps.isEmpty) {
+      return {
+        'success': false,
+        'message': 'Email atau password salah.'
+      };
+    }
+
+    return {
+      'success': true,
+      'user': maps.first,
+      'message': 'Login berhasil.'
+    };
+  }
+
+  /// Mendapatkan data profil user berdasarkan ID
+  Future<Map<String, dynamic>?> getUserProfile(int userId) async {
+    if (_useMemoryFallback) {
+      return _webUsers.where((u) => u['id'] == userId).firstOrNull;
+    }
+
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tb_user',
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+    if (maps.isEmpty) return null;
+    return maps.first;
+  }
+
+  /// Memperbarui detail profil user
+  Future<int> updateUserProfile({
+    required int userId,
+    required String name,
+    required String phone,
+    required String gender,
+    required String address,
+    required String? photoPath,
+  }) async {
+    if (_useMemoryFallback) {
+      final index = _webUsers.indexWhere((u) => u['id'] == userId);
+      if (index != -1) {
+        _webUsers[index] = {
+          'id': userId,
+          'name': name.trim(),
+          'email': _webUsers[index]['email'],
+          'password': _webUsers[index]['password'],
+          'phone': phone.trim(),
+          'gender': gender,
+          'address': address.trim(),
+          'photo_path': photoPath,
+        };
+        return 1;
+      }
+      return 0;
+    }
+
+    final Database db = await database;
+    return await db.update(
+      'tb_user',
+      {
+        'name': name.trim(),
+        'phone': phone.trim(),
+        'gender': gender,
+        'address': address.trim(),
+        'photo_path': photoPath,
+      },
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // UTILITIES
+  // ════════════════════════════════════════════════════════════════════════════
+
   Future<void> close() async {
+    if (_useMemoryFallback) return;
     final Database db = await database;
     await db.close();
     _database = null;
   }
 
-  /// Menghapus semua data dan membuat ulang (untuk reset/debug).
   Future<void> resetDatabase() async {
+    if (_useMemoryFallback) {
+      _webUsers.clear();
+      _webMenus.clear();
+      _webOrders.clear();
+      _webUsers.addAll([
+        {
+          'id': 1,
+          'name': 'Admin Foodie',
+          'email': 'admin@gmail.com',
+          'password': 'admin123',
+          'phone': '081234567890',
+          'gender': 'Laki - laki',
+          'address': 'Kantor Pusat Foodie',
+          'photo_path': '',
+        },
+        {
+          'id': 2,
+          'name': 'M. Fattah Syauqi',
+          'email': 'msyauqi559@gmail.com',
+          'password': 'user123',
+          'phone': '085856238817',
+          'gender': 'Laki - laki',
+          'address': 'Jl. Imam Bonjol No. 19, Pasuruan, Jawa Timur',
+          'photo_path': '',
+        }
+      ]);
+      return;
+    }
     final Database db = await database;
+    await db.delete('tb_user');
     await db.delete('tb_pesanan');
     await db.delete('tb_menu');
-    await _seedMenuData(db);
-    await _seedPesananData(db);
+    await _seedUserData(db);
   }
 }

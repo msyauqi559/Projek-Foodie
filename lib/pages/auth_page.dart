@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
 import '../constants/app_spacing.dart';
 import '../services/app_navigation.dart';
+import '../services/database_helper.dart';
 import '../utils/auth_validators.dart';
 import '../utils/responsive.dart';
 import '../widgets/app_text_field.dart';
@@ -28,6 +30,40 @@ class _AuthPageState extends State<AuthPage> {
   final TextEditingController passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('saved_email');
+    final savedPassword = prefs.getString('saved_password');
+    final savedRememberMe = prefs.getBool('remember_me') ?? false;
+
+    if (savedRememberMe && savedEmail != null && savedPassword != null) {
+      setState(() {
+        emailController.text = savedEmail;
+        passwordController.text = savedPassword;
+        rememberMe = true;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (rememberMe) {
+      await prefs.setString('saved_email', emailController.text.trim());
+      await prefs.setString('saved_password', passwordController.text);
+      await prefs.setBool('remember_me', true);
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+      await prefs.setBool('remember_me', false);
+    }
+  }
+
+  @override
   void dispose() {
     nameController.dispose();
     emailController.dispose();
@@ -45,8 +81,8 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  void _submit() {
-    final email = emailController.text;
+  Future<void> _submit() async {
+    final email = emailController.text.trim();
     final password = passwordController.text;
 
     final emailErr = AuthValidators.emailError(email);
@@ -61,27 +97,59 @@ class _AuthPageState extends State<AuthPage> {
       return;
     }
 
-    if (!isLogin && nameController.text.trim().isEmpty) {
-      _showMessage('Masukkan username');
-      return;
-    }
-
+    // Bypass khusus Admin
     if (email == 'admin@gmail.com' && password == 'admin123') {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('user_id', -1);
+      await prefs.setString('user_name', 'Admin Foodie');
+      await prefs.setString('user_email', 'admin@gmail.com');
+      if (rememberMe) {
+        await _saveCredentials();
+      }
+      if (!mounted) return;
       AppNavigation.openAdmin(context);
       return;
     }
 
     if (isLogin) {
-      AppNavigation.onLoginSuccess(context);
-      return;
-    }
+      // LOGIC LOGIN SQLITE
+      final result = await DatabaseHelper.instance.loginUser(email, password);
+      if (result['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        final user = result['user'] as Map<String, dynamic>;
+        await prefs.setInt('user_id', user['id'] as int);
+        await prefs.setString('user_name', user['name'] as String);
+        await prefs.setString('user_email', user['email'] as String);
 
-    setState(() {
-      isLogin = true;
-      nameController.clear();
-      passwordController.clear();
-    });
-    _showMessage('Registrasi berhasil. Silakan login.');
+        if (rememberMe) {
+          await _saveCredentials();
+        }
+        if (!mounted) return;
+        AppNavigation.onLoginSuccess(context);
+      } else {
+        _showMessage(result['message']);
+      }
+    } else {
+      // LOGIC REGISTER SQLITE
+      final name = nameController.text.trim();
+      if (name.isEmpty) {
+        _showMessage('Masukkan username');
+        return;
+      }
+
+      final result = await DatabaseHelper.instance.registerUser(name, email, password);
+
+      if (result['success'] == true) {
+        setState(() {
+          isLogin = true;
+          nameController.clear();
+          passwordController.clear();
+        });
+        _showMessage('Registrasi berhasil. Silakan login.');
+      } else {
+        _showMessage(result['message']);
+      }
+    }
   }
 
   @override
@@ -101,12 +169,12 @@ class _AuthPageState extends State<AuthPage> {
                   const SizedBox(height: 20),
                   const ReusableImage(
                     imagePath: AppAssets.logo,
-                    width: 180,
-                    height: 180,
+                    width: 260, // Diperbesar dari 180 ke 260 agar logo terlihat lebih berwibawa dan menonjol
+                    height: 260,
                     fit: BoxFit.contain,
                     borderRadius: 0,
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 12),
                   Text(
                     isLogin ? 'Login!' : 'Registrasi!',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(

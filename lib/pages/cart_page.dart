@@ -185,10 +185,30 @@ class _CartPageState extends State<CartPage> {
                   child: ReusableButton(
                     label: 'Pesan Sekarang!',
                     onPressed: () async {
+                      // Generate timestamp pada saat tombol diklik (Time IRL)
+                      final DateTime now = DateTime.now();
+                      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                      final String orderTimeLabel = '${now.day} ${months[now.month - 1]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+                      final finalOrder = OrderHistoryItem(
+                        id: previewOrder.id,
+                        food: previewOrder.food,
+                        quantity: previewOrder.quantity,
+                        userId: previewOrder.userId,
+                        dateLabel: orderTimeLabel,
+                        statusLabel: previewOrder.statusLabel,
+                        isSuccess: previewOrder.isSuccess,
+                        total: previewOrder.total,
+                        promoDiscount: previewOrder.promoDiscount,
+                        shippingCost: previewOrder.shippingCost,
+                        tax: previewOrder.tax,
+                        promoCode: previewOrder.promoCode,
+                      );
+
                       // Simpan ke SQLite
-                      await DatabaseHelper.instance.insertPesanan(previewOrder);
+                      await DatabaseHelper.instance.insertPesanan(finalOrder);
                       // Tampilkan popup sukses
-                      if (context.mounted) _showSuccessSheet(context, previewOrder);
+                      if (context.mounted) _showSuccessSheet(context, finalOrder);
                     },
                     borderRadius: AppDimensions.radiusMd,
                     height: 60,

@@ -21,9 +21,9 @@ class AppColors {
   static const Color promoPeach = Color(0xFFFFE7D3);
   static const Color promoCream = Color(0xFFFFF3E8);
   static const Color promoBanner = Color(0xFFFFC69F);
-  static const Color divider = Color(0xFFD8D8D8);
-  static const Color borderLight = Color(0xFFD5D5D5);
-  static const Color borderMedium = Color(0xFFD0D0D0);
+  static const Color divider = Color(0xFFE2E2E2);
+  static const Color borderLight = Color(0xFFE2E2E2);
+  static const Color borderMedium = Color(0xFFE2E2E2);
   static const Color borderSubtle = Color(0xFFE8E8E8);
   static const Color grayText = Color(0xFF777777);
   static const Color grayMuted = Color(0xFF8B8B8B);

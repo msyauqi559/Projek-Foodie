@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
-class NotificationButton extends StatelessWidget {
-  const NotificationButton({super.key, this.onTap});
+
+class CartButton extends StatelessWidget {
+  const CartButton({super.key, this.onTap});
 
   final VoidCallback? onTap;
 
@@ -13,7 +14,7 @@ class NotificationButton extends StatelessWidget {
       child: Material(
         color: AppColors.card,
         shape: const CircleBorder(
-          side: BorderSide(color: AppColors.dark, width: 1),
+          side: BorderSide(color: AppColors.borderLight, width: 1.2),
         ),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -21,7 +22,7 @@ class NotificationButton extends StatelessWidget {
           child: const Padding(
             padding: EdgeInsets.all(10),
             child: Icon(
-              Icons.notifications_none_rounded,
+              Icons.shopping_bag_outlined,
               color: AppColors.textPrimary,
               size: 22,
             ),

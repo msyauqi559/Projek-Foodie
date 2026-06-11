@@ -256,23 +256,40 @@ class _CategoryTab extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+          borderRadius: BorderRadius.circular(24),
           child: Container(
-            width: 100,
-            height: 45,
+            width: 110,
+            height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: isSelected ? AppColors.primary : AppColors.card,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-              border: Border.all(color: AppColors.primary),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isSelected ? AppColors.primary : AppColors.borderLight,
+                width: 1.5,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
             child: Text(
               item.label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color:
-                        isSelected ? AppColors.card : AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    color: isSelected ? AppColors.card : AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
                   ),
             ),
           ),

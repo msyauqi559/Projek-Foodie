@@ -15,10 +15,22 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  double _opacity = 0.0;
+
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 2), () {
+    
+    // Start fade-in animation after a small delay
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        setState(() {
+          _opacity = 1.0;
+        });
+      }
+    });
+
+    Timer(const Duration(seconds: 3), () {
       if (!mounted) {
         return;
       }
@@ -31,13 +43,67 @@ class _SplashPageState extends State<SplashPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: const Center(
-        child: ReusableImage(
-          imagePath: AppAssets.splashLogo,
-          width: 280,
-          height: 280,
-          fit: BoxFit.contain,
-          borderRadius: 0,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(
+              child: AnimatedOpacity(
+                opacity: _opacity,
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.easeOutCubic,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ReusableImage(
+                      imagePath: AppAssets.splashLogo,
+                      width: 260,
+                      height: 260,
+                      fit: BoxFit.contain,
+                      borderRadius: 0,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Temukan Makanan Lezat Favoritmu',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Foodie App v1.2',
+                      style: TextStyle(
+                        color: AppColors.grayText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

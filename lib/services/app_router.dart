@@ -41,7 +41,7 @@ class AppRouter {
         final FoodItem food = settings.arguments! as FoodItem;
         return _slideRoute(DetailPage(food: food), settings);
       case AppRoutes.cart:
-        final FoodItem food = settings.arguments! as FoodItem;
+        final FoodItem? food = settings.arguments as FoodItem?;
         return _slideRoute(CartPage(food: food), settings);
       case AppRoutes.tracking:
         final OrderHistoryItem? order = settings.arguments as OrderHistoryItem?;

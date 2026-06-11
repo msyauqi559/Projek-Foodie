@@ -61,7 +61,7 @@ class AppNavigation {
     Navigator.pushNamed(context, AppRoutes.detail, arguments: food);
   }
 
-  static void openCart(BuildContext context, FoodItem food) {
+  static void openCart(BuildContext context, [FoodItem? food]) {
     Navigator.pushNamed(context, AppRoutes.cart, arguments: food);
   }
 
@@ -79,6 +79,16 @@ class AppNavigation {
       context,
       AppRoutes.shell,
       (_) => false,
+    );
+  }
+
+  /// Setelah checkout sukses: kembali ke History (tab shell).
+  static void finishCheckoutGoHistory(BuildContext context) {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.shell,
+      (_) => false,
+      arguments: 2, // Index 2 is History
     );
   }
 

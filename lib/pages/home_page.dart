@@ -12,8 +12,7 @@ import '../utils/responsive.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/figma_page_body.dart';
 import '../widgets/home_brand_header.dart';
-import '../widgets/notification_button.dart';
-import '../widgets/notification_empty_sheet.dart';
+import '../widgets/cart_button.dart';
 import '../widgets/reusable_image.dart';
 import '../widgets/section_header.dart';
 
@@ -107,8 +106,8 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Expanded(child: HomeBrandHeader()),
-                    NotificationButton(
-                      onTap: () => NotificationEmptySheet.show(context),
+                    CartButton(
+                      onTap: () => AppNavigation.openCart(context),
                     ),
                   ],
                 ),
@@ -203,8 +202,8 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Expanded(child: HomeBrandHeader()),
-                  NotificationButton(
-                    onTap: () => NotificationEmptySheet.show(context),
+                  CartButton(
+                    onTap: () => AppNavigation.openCart(context),
                   ),
                 ],
               ),
@@ -464,38 +463,46 @@ class _PopularMenuCard extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: AppColors.card,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.8)),
+          boxShadow: [
             BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 14,
-              offset: Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gambar dengan badge rating
+            // Image with glassmorphic rating badge
             Stack(
               children: [
                 ReusableImage(
                   imagePath: food.imagePath,
                   width: double.infinity,
                   height: 115,
-                  borderRadius: 12,
+                  borderRadius: 14,
                 ),
                 Positioned(
-                  top: 6,
-                  right: 6,
+                  top: 8,
+                  right: 8,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.dark.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -503,15 +510,15 @@ class _PopularMenuCard extends StatelessWidget {
                         const Icon(
                           Icons.star_rounded,
                           color: AppColors.warning,
-                          size: 12,
+                          size: 13,
                         ),
                         const SizedBox(width: 2),
                         Text(
                           food.rating.toStringAsFixed(1),
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ],
@@ -520,7 +527,7 @@ class _PopularMenuCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               food.name,
               maxLines: 2,
@@ -528,11 +535,12 @@ class _PopularMenuCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textPrimary,
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
               ),
             ),
             const Spacer(),
-            // Harga + Waktu kirim
+            // Price & Delivery info
             Row(
               children: [
                 Expanded(
@@ -540,14 +548,14 @@ class _PopularMenuCard extends StatelessWidget {
                     PriceFormatter.toRupiah(food.price),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       fontSize: 12,
                     ),
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.access_time_rounded,
-                  size: 11,
+                  size: 12,
                   color: AppColors.grayText,
                 ),
                 const SizedBox(width: 2),
@@ -556,6 +564,7 @@ class _PopularMenuCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 10,
                     color: AppColors.grayText,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -944,22 +953,52 @@ class _PromoBanner extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: AppDimensions.promoBannerHeight,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.promoBanner,
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.shadow,
-                blurRadius: 18,
-                offset: Offset(0, 6),
-              ),
-            ],
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFF2E6), Color(0xFFFFD4B2)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.15),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
           child: Stack(
             fit: StackFit.expand,
             children: [
+              // Decorative background circles
+              Positioned(
+                left: -30,
+                top: -30,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 80,
+                bottom: -40,
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
               Positioned(
                 right: 0,
                 bottom: 0,
@@ -987,30 +1026,32 @@ class _PromoBanner extends StatelessWidget {
                                 ?.copyWith(
                                   fontSize: 20,
                                   height: 1.45,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
                                 ),
                           ),
                         ),
                         const Spacer(),
                         SizedBox(
-                          width: 134,
-                          height: 32,
+                          width: 120,
+                          height: 36,
                           child: ElevatedButton(
                             onPressed: onTap,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: AppColors.card,
-                              elevation: 0,
+                              elevation: 4,
+                              shadowColor: AppColors.primary.withValues(alpha: 0.4),
                               padding: EdgeInsets.zero,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
                             ),
                             child: const Text(
-                              'Beli!',
+                              'Beli Sekarang',
                               style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
                               ),
                             ),
                           ),

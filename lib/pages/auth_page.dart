@@ -169,7 +169,7 @@ class _AuthPageState extends State<AuthPage> {
                   const SizedBox(height: 20),
                   const ReusableImage(
                     imagePath: AppAssets.logo,
-                    width: 260, // Diperbesar dari 180 ke 260 agar logo terlihat lebih berwibawa dan menonjol
+                    width: 260,
                     height: 260,
                     fit: BoxFit.contain,
                     borderRadius: 0,
@@ -179,6 +179,8 @@ class _AuthPageState extends State<AuthPage> {
                     isLogin ? 'Login!' : 'Registrasi!',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
                         ),
                   ),
                   const SizedBox(height: 10),
@@ -189,6 +191,7 @@ class _AuthPageState extends State<AuthPage> {
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontSize: 14,
                           color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
                         ),
                   ),
                   const SizedBox(height: 40),
@@ -203,7 +206,7 @@ class _AuthPageState extends State<AuthPage> {
                       controller: nameController,
                       hintText: 'Masukkan Username',
                       prefixIcon: Icons.person_outline_rounded,
-                      borderColor: AppColors.divider,
+                      borderColor: AppColors.borderLight,
                       borderRadius: AppDimensions.authFieldRadius,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -217,7 +220,7 @@ class _AuthPageState extends State<AuthPage> {
                     hintText: 'Masukkan Email',
                     prefixIcon: Icons.mail_outline_rounded,
                     keyboardType: TextInputType.emailAddress,
-                    borderColor: AppColors.divider,
+                    borderColor: AppColors.borderLight,
                     borderRadius: AppDimensions.authFieldRadius,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -236,7 +239,7 @@ class _AuthPageState extends State<AuthPage> {
                       setState(() => isPasswordHidden = !isPasswordHidden);
                     },
                     obscureText: isPasswordHidden,
-                    borderColor: AppColors.divider,
+                    borderColor: AppColors.borderLight,
                     borderRadius: AppDimensions.authFieldRadius,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -257,7 +260,7 @@ class _AuthPageState extends State<AuthPage> {
                             decoration: BoxDecoration(
                               color: rememberMe ? AppColors.primary : AppColors.card,
                               borderRadius: BorderRadius.circular(7),
-                              border: Border.all(color: AppColors.checkboxBorder),
+                              border: Border.all(color: AppColors.borderLight, width: 1.5),
                             ),
                             child: rememberMe
                                 ? const Icon(
@@ -273,6 +276,8 @@ class _AuthPageState extends State<AuthPage> {
                           'Ingat saya',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                 fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
                               ),
                         ),
                       ],
@@ -287,6 +292,7 @@ class _AuthPageState extends State<AuthPage> {
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                 color: AppColors.primary,
                                 fontSize: 14,
+                                fontWeight: FontWeight.w700,
                               ),
                         ),
                       ),
@@ -334,7 +340,7 @@ class _AuthSwitcher extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.authTrack,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.divider),
+              border: Border.all(color: AppColors.borderLight),
             ),
             child: Stack(
               children: [

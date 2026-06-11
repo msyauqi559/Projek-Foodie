@@ -7,7 +7,7 @@ import '../models/food_item.dart';
 import '../models/order_history_item.dart';
 
 /// ============================================================================
-/// DATABASE HELPER (SQLITE) — VERSI 5 (DENGAN DUKUNGAN PLATFORM FALLBACK)
+/// DATABASE HELPER (SQLITE) — VERSI 6 (DENGAN DUKUNGAN PLATFORM FALLBACK & CART)
 /// ============================================================================
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -51,9 +51,11 @@ class DatabaseHelper {
   ];
   static final List<Map<String, dynamic>> _webMenus = [];
   static final List<Map<String, dynamic>> _webOrders = [];
+  static final List<Map<String, dynamic>> _webCart = [];
   static int _webUserIdCounter = 3;
   static int _webMenuIdCounter = 1;
   static int _webOrderIdCounter = 1;
+  static int _webCartIdCounter = 1;
 
   Future<Database> get database async {
     if (_useMemoryFallback) {
@@ -70,16 +72,17 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5, // Naik ke versi 5 untuk menghapus menu dummy
+      version: 6, // Naik ke versi 6 untuk mendukung fitur tb_cart
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
   /// Fungsi Pembaruan Skema Database (`onUpgrade`).
-  /// Menghapus dan membuat ulang seluruh tabel untuk menjamin konsistensi skema.
+  /// Menghapus dan membuat ulang seluruh tabel untuk menjaga konsistensi skema.
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 5) {
+    if (oldVersion < 6) {
+      await db.execute('DROP TABLE IF EXISTS tb_cart');
       await db.execute('DROP TABLE IF EXISTS tb_user');
       await db.execute('DROP TABLE IF EXISTS tb_pesanan');
       await db.execute('DROP TABLE IF EXISTS tb_menu');
@@ -135,6 +138,20 @@ class DatabaseHelper {
         shipping_cost  REAL    NOT NULL,
         tax            REAL    NOT NULL,
         promo_code     TEXT    NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES tb_user (id)
+          ON DELETE CASCADE,
+        FOREIGN KEY (menu_id) REFERENCES tb_menu (id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    // ── TABEL KERANJANG: tb_cart (Keranjang Belanja) ──
+    await db.execute('''
+      CREATE TABLE tb_cart (
+        id       INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id  INTEGER NOT NULL,
+        menu_id  INTEGER NOT NULL,
+        quantity INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES tb_user (id)
           ON DELETE CASCADE,
         FOREIGN KEY (menu_id) REFERENCES tb_menu (id)
@@ -609,6 +626,147 @@ class DatabaseHelper {
   }
 
   // ════════════════════════════════════════════════════════════════════════════
+  // CRUD — tb_cart (Keranjang Belanja)
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Future<int> addToCart(int userId, int menuId, int quantity) async {
+    if (_useMemoryFallback) {
+      final match = _webCart.where((item) => item['user_id'] == userId && item['menu_id'] == menuId).firstOrNull;
+      if (match != null) {
+        match['quantity'] = (match['quantity'] as int) + quantity;
+        return match['id'] as int;
+      }
+      final id = _webCartIdCounter++;
+      _webCart.add({
+        'id': id,
+        'user_id': userId,
+        'menu_id': menuId,
+        'quantity': quantity,
+      });
+      return id;
+    }
+    final Database db = await database;
+    final List<Map<String, dynamic>> existing = await db.query(
+      'tb_cart',
+      where: 'user_id = ? AND menu_id = ?',
+      whereArgs: [userId, menuId],
+    );
+    if (existing.isNotEmpty) {
+      final currentQty = existing.first['quantity'] as int;
+      final newQty = currentQty + quantity;
+      return await db.update(
+        'tb_cart',
+        {'quantity': newQty},
+        where: 'id = ?',
+        whereArgs: [existing.first['id']],
+      );
+    }
+    return await db.insert('tb_cart', {
+      'user_id': userId,
+      'menu_id': menuId,
+      'quantity': quantity,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getCartItems(int userId) async {
+    if (_useMemoryFallback) {
+      final List<Map<String, dynamic>> results = [];
+      for (final item in _webCart.where((c) => c['user_id'] == userId)) {
+        final menu = _webMenus.where((m) => m['id'] == item['menu_id']).firstOrNull;
+        if (menu != null) {
+          results.add({
+            'id': item['id'],
+            'user_id': item['user_id'],
+            'menu_id': item['menu_id'],
+            'quantity': item['quantity'],
+            'food': FoodItem.fromMap(menu),
+          });
+        }
+      }
+      return results;
+    }
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT c.id, c.user_id, c.menu_id, c.quantity,
+             m.name AS m_name, m.category AS m_category, m.address AS m_address,
+             m.description AS m_description, m.image_path AS m_image_path,
+             m.price AS m_price, m.rating AS m_rating, m.delivery_time AS m_delivery_time,
+             m.distance AS m_distance, m.calories AS m_calories, m.tags AS m_tags
+      FROM tb_cart c
+      INNER JOIN tb_menu m ON c.menu_id = m.id
+      WHERE c.user_id = ?
+    ''', [userId]);
+
+    return maps.map((map) {
+      return {
+        'id': map['id'],
+        'user_id': map['user_id'],
+        'menu_id': map['menu_id'],
+        'quantity': map['quantity'],
+        'food': FoodItem.fromMap({
+          'id': map['menu_id'],
+          'name': map['m_name'],
+          'category': map['m_category'],
+          'address': map['m_address'],
+          'description': map['m_description'],
+          'image_path': map['m_image_path'],
+          'price': map['m_price'],
+          'rating': map['m_rating'],
+          'delivery_time': map['m_delivery_time'],
+          'distance': map['m_distance'],
+          'calories': map['m_calories'],
+          'tags': map['m_tags'],
+        }),
+      };
+    }).toList();
+  }
+
+  Future<int> updateCartQuantity(int cartId, int quantity) async {
+    if (_useMemoryFallback) {
+      final idx = _webCart.indexWhere((c) => c['id'] == cartId);
+      if (idx != -1) {
+        _webCart[idx]['quantity'] = quantity;
+        return 1;
+      }
+      return 0;
+    }
+    final Database db = await database;
+    return await db.update(
+      'tb_cart',
+      {'quantity': quantity},
+      where: 'id = ?',
+      whereArgs: [cartId],
+    );
+  }
+
+  Future<int> removeFromCart(int cartId) async {
+    if (_useMemoryFallback) {
+      final len = _webCart.length;
+      _webCart.removeWhere((c) => c['id'] == cartId);
+      return len - _webCart.length;
+    }
+    final Database db = await database;
+    return await db.delete(
+      'tb_cart',
+      where: 'id = ?',
+      whereArgs: [cartId],
+    );
+  }
+
+  Future<void> clearCart(int userId) async {
+    if (_useMemoryFallback) {
+      _webCart.removeWhere((c) => c['user_id'] == userId);
+      return;
+    }
+    final Database db = await database;
+    await db.delete(
+      'tb_cart',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
   // UTILITIES
   // ════════════════════════════════════════════════════════════════════════════
 
@@ -624,6 +782,7 @@ class DatabaseHelper {
       _webUsers.clear();
       _webMenus.clear();
       _webOrders.clear();
+      _webCart.clear();
       _webUsers.addAll([
         {
           'id': 1,
@@ -652,6 +811,7 @@ class DatabaseHelper {
     await db.delete('tb_user');
     await db.delete('tb_pesanan');
     await db.delete('tb_menu');
+    await db.delete('tb_cart');
     await _seedUserData(db);
   }
 }

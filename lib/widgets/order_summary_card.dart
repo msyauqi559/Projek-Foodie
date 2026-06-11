@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
-import '../constants/app_spacing.dart';
 import '../models/order_history_item.dart';
 import '../utils/formatters.dart';
 
@@ -26,15 +25,16 @@ class OrderSummaryCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
           BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 18,
-            offset: Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -43,11 +43,13 @@ class OrderSummaryCard extends StatelessWidget {
         children: [
           Text(
             'Ringkasan pembayaran',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontSize: 16),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 18),
           _SummaryRow(
             label: 'Jumlah tagihan',
             value: '${PriceFormatter.toRupiah(subtotal)} (${order.quantity}x)',
@@ -57,6 +59,7 @@ class OrderSummaryCard extends StatelessWidget {
             value: order.promoDiscount > 0
                 ? '-${PriceFormatter.toRupiah(order.promoDiscount)}'
                 : '-',
+            valueColor: order.promoDiscount > 0 ? const Color(0xFF16A34A) : null,
           ),
           _SummaryRow(
             label: 'Pengiriman',
@@ -72,13 +75,14 @@ class OrderSummaryCard extends StatelessWidget {
               value: order.promoCode,
             ),
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Divider(color: AppColors.grayText, height: 1),
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(color: AppColors.borderLight, height: 1),
           ),
           _SummaryRow(
             label: totalLabel,
             value: PriceFormatter.toRupiah(order.total),
             isBold: true,
+            valueColor: AppColors.primary,
           ),
         ],
       ),
@@ -91,35 +95,38 @@ class _SummaryRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.isBold = false,
+    this.valueColor,
   });
 
   final String label;
   final String value;
   final bool isBold;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+    final labelStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
           color: isBold ? AppColors.textPrimary : AppColors.grayText,
-          fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-          fontSize: isBold ? 15 : 14,
+          fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
+          fontSize: isBold ? 15 : 13.5,
+        );
+
+    final valueStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: valueColor ?? (isBold ? AppColors.textPrimary : AppColors.textPrimary),
+          fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
+          fontSize: isBold ? 16 : 13.5,
         );
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            flex: 2,
-            child: Text(label, style: textStyle),
-          ),
-          Expanded(
-            flex: 1,
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: textStyle,
-            ),
+          Text(label, style: labelStyle),
+          Text(
+            value,
+            textAlign: TextAlign.right,
+            style: valueStyle,
           ),
         ],
       ),

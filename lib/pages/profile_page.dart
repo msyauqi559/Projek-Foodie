@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
 import '../services/app_navigation.dart';
 import '../constants/app_dimensions.dart';
@@ -25,6 +24,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int? loggedInUserId;
   Map<String, dynamic>? userProfile;
   bool isLoading = true;
+  int orderCount = 0;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -63,9 +63,11 @@ class _ProfilePageState extends State<ProfilePage> {
     // Default ke ID 2 jika session kosong (kredensial M. Fattah Syauqi di seeder)
     final userId = prefs.getInt('user_id') ?? 2;
     final profile = await DatabaseHelper.instance.getUserProfile(userId);
+    final pesananList = await DatabaseHelper.instance.getPesananByUserId(userId);
     setState(() {
       loggedInUserId = userId;
       userProfile = profile;
+      orderCount = pesananList.length;
       isLoading = false;
     });
   }
@@ -214,7 +216,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final gender = userProfile?['gender'] ?? 'Laki - Laki';
     final address = userProfile?['address'] ?? '-';
     final photo = userProfile?['photo_path'] as String?;
-    final String displayPhoto = (photo == null || photo.isEmpty) ? AppAssets.user : photo;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -277,7 +278,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildStatItem(context, Icons.receipt_long_rounded, 'Pesanan', '5+ Kali'),
+                  _buildStatItem(context, Icons.receipt_long_rounded, 'Pesanan', '$orderCount Kali'),
                   Container(height: 28, width: 1, color: Colors.grey.shade200),
                   _buildStatItem(context, Icons.workspace_premium_rounded, 'Loyalitas', 'Premium'),
                   Container(height: 28, width: 1, color: Colors.grey.shade200),
@@ -351,11 +352,23 @@ class _ProfilePageState extends State<ProfilePage> {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: ReusableImage(
-              imagePath: displayPhoto,
-              fit: BoxFit.cover,
-              borderRadius: 55,
-            ),
+            child: (photo == null || photo.isEmpty)
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person_rounded,
+                      size: 55,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : ReusableImage(
+                    imagePath: photo,
+                    fit: BoxFit.cover,
+                    borderRadius: 55,
+                  ),
           ),
         ),
       ],
@@ -432,11 +445,23 @@ class _ProfilePageState extends State<ProfilePage> {
                               shape: BoxShape.circle,
                               border: Border.all(color: AppColors.primary, width: 2),
                             ),
-                            child: ReusableImage(
-                              imagePath: selectedPhoto.isEmpty ? AppAssets.user : selectedPhoto,
-                              fit: BoxFit.cover,
-                              borderRadius: 45,
-                            ),
+                            child: selectedPhoto.isEmpty
+                                ? Container(
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.person_rounded,
+                                      size: 40,
+                                      color: AppColors.primary,
+                                    ),
+                                  )
+                                : ReusableImage(
+                                    imagePath: selectedPhoto,
+                                    fit: BoxFit.cover,
+                                    borderRadius: 45,
+                                  ),
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -670,8 +695,8 @@ class _ProfilePageState extends State<ProfilePage> {
               Container(
                 width: 60,
                 height: 60,
-                decoration: BoxDecoration(color: AppColors.danger.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.logout_rounded, color: AppColors.danger, size: 30),
+                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.logout_rounded, color: AppColors.primary, size: 30),
               ),
               const SizedBox(height: 20),
               Text(
@@ -697,7 +722,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     Navigator.pop(context);
                     AppNavigation.onLogout(parentContext);
                   },
-                  backgroundColor: AppColors.danger,
+                  backgroundColor: AppColors.primary,
+                  borderColor: AppColors.primary,
                   borderRadius: 12,
                   height: 50,
                 ),

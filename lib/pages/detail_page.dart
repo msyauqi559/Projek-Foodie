@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
-import '../constants/app_dimensions.dart';
 import '../models/food_item.dart';
 import '../services/app_navigation.dart';
+import '../services/database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/formatters.dart';
 import '../utils/responsive.dart';
 import '../widgets/back_circle_button.dart';
@@ -37,40 +38,51 @@ class DetailPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                          child: BackCircleButton(
-                            onTap: () => AppNavigation.back(context),
-                          ),
-                        ),
-                        ReusableImage(
-                          imagePath: detailImagePath,
-                          width: double.infinity,
-                          height: Responsive.value(
-                            context,
-                            mobile: 360,
-                            tablet: 420,
-                          ),
-                          fit: BoxFit.contain,
-                          heroTag: food.id,
-                          borderRadius: 0,
+                        Stack(
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: Responsive.value(
+                                context,
+                                mobile: 340,
+                                tablet: 400,
+                              ),
+                              color: AppColors.background,
+                              alignment: Alignment.center,
+                              child: ReusableImage(
+                                imagePath: detailImagePath,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.contain,
+                                heroTag: food.id,
+                                borderRadius: 0,
+                              ),
+                            ),
+                            Positioned(
+                              top: 16,
+                              left: 20,
+                              child: BackCircleButton(
+                                onTap: () => AppNavigation.back(context),
+                              ),
+                            ),
+                          ],
                         ),
                         Transform.translate(
                           offset: const Offset(0, -18),
                           child: Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
-                            decoration: const BoxDecoration(
+                            padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
+                            decoration: BoxDecoration(
                               color: AppColors.card,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(26),
-                                topRight: Radius.circular(26),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(30),
+                                topRight: Radius.circular(30),
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.shadow,
-                                  blurRadius: 18,
-                                  offset: Offset(0, -2),
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, -6),
                                 ),
                               ],
                             ),
@@ -78,7 +90,7 @@ class DetailPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Expanded(
                                       child: Text(
@@ -87,8 +99,9 @@ class DetailPage extends StatelessWidget {
                                             .textTheme
                                             .headlineMedium
                                             ?.copyWith(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w700,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.textPrimary,
                                             ),
                                       ),
                                     ),
@@ -100,67 +113,89 @@ class DetailPage extends StatelessWidget {
                                           .headlineMedium
                                           ?.copyWith(
                                             fontSize: 22,
-                                            fontWeight: FontWeight.w700,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.primary,
                                           ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 14),
-                                const Divider(
-                                  color: AppColors.divider,
-                                  height: 1,
-                                ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 20),
                                 Row(
                                   children: [
-                                    const Icon(
-                                      Icons.star_rounded,
-                                      color: AppColors.warning,
-                                      size: 28,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      food.rating.toStringAsFixed(1),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
+                                    // Rating pill
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFF7ED),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                            color: const Color(0xFFFFEDD5)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.star_rounded,
+                                            color: Color(0xFFF97316),
+                                            size: 18,
                                           ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Padding(
-                                      padding: EdgeInsets.only(top: 2),
-                                      child: Icon(
-                                        Icons.location_on_outlined,
-                                        size: 20,
-                                        color: AppColors.textPrimary,
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            food.rating.toStringAsFixed(1),
+                                            style: const TextStyle(
+                                              color: Color(0xFFC2410C),
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 10),
+                                    // Location pill
                                     Expanded(
-                                      child: Text(
-                                        food.address,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge
-                                            ?.copyWith(fontSize: 14),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.background,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                              color: AppColors.borderLight),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.location_on_rounded,
+                                              color: AppColors.primary,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Expanded(
+                                              child: Text(
+                                                food.address,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 24),
                                 const Divider(
-                                  color: AppColors.divider,
+                                  color: AppColors.borderLight,
                                   height: 1,
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 24),
                                 Text(
                                   'Deskripsi',
                                   style: Theme.of(context)
@@ -168,31 +203,57 @@ class DetailPage extends StatelessWidget {
                                       .titleMedium
                                       ?.copyWith(
                                         fontSize: 16,
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
                                       ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
                                 Text(
                                   food.description,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyLarge
                                       ?.copyWith(
-                                        fontSize: 15,
+                                        fontSize: 14,
                                         height: 1.6,
-                                        color: AppColors.textPrimary,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                 ),
-                                const SizedBox(height: 64),
+                                const SizedBox(height: 40),
                                 Center(
                                   child: FractionallySizedBox(
-                                    widthFactor: 0.9,
+                                    widthFactor: 1.0,
                                     child: ReusableButton(
                                       label: 'Masukkan ke keranjang!',
-                                      onPressed: () =>
-                                          AppNavigation.openCart(context, food),
-                                      borderRadius: AppDimensions.radiusMd,
-                                      height: 60,
+                                      onPressed: () async {
+                                        final prefs = await SharedPreferences.getInstance();
+                                        final userId = prefs.getInt('user_id') ?? 2;
+                                        int? targetMenuDbId = food.dbId;
+                                        if (targetMenuDbId == null) {
+                                          final allMenus = await DatabaseHelper.instance.getAllMenus();
+                                          final match = allMenus.where((m) => m.name == food.name).firstOrNull;
+                                          if (match != null) {
+                                            targetMenuDbId = match.dbId;
+                                          } else {
+                                            targetMenuDbId = await DatabaseHelper.instance.insertMenu(food);
+                                          }
+                                        }
+                                        if (targetMenuDbId != null) {
+                                          await DatabaseHelper.instance.addToCart(userId, targetMenuDbId, 1);
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Berhasil dimasukkan ke keranjang!'),
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                            AppNavigation.openCart(context);
+                                          }
+                                        }
+                                      },
+                                      borderRadius: 16,
+                                      height: 54,
                                     ),
                                   ),
                                 ),

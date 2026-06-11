@@ -122,7 +122,13 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: labelStyle),
+          Expanded(
+            child: Text(
+              label,
+              style: labelStyle,
+            ),
+          ),
+          const SizedBox(width: 8),
           Text(
             value,
             textAlign: TextAlign.right,

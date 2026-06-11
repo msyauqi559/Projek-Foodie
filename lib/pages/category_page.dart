@@ -5,7 +5,6 @@ import '../constants/app_spacing.dart';
 import '../models/category_item.dart';
 import '../models/food_item.dart';
 import '../services/app_navigation.dart';
-import '../services/dummy_data_service.dart';
 import '../services/database_helper.dart';
 import '../constants/app_dimensions.dart';
 import '../widgets/app_text_field.dart';
@@ -219,7 +218,7 @@ class _CategoryChipsRow extends StatelessWidget {
             constraints: BoxConstraints(minWidth: constraints.maxWidth),
           child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: DummyDataService.categories.map((item) {
+              children: _staticCategories.map((item) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: _CategoryTab(
@@ -350,3 +349,30 @@ class _FoodSection extends StatelessWidget {
     );
   }
 }
+
+const List<CategoryItem> _staticCategories = [
+  CategoryItem(
+    id: 'all',
+    label: 'Semua',
+    icon: Icons.grid_view_rounded,
+    itemCount: 6,
+  ),
+  CategoryItem(
+    id: 'nusantara',
+    label: 'Nusantara',
+    icon: Icons.ramen_dining_rounded,
+    itemCount: 4,
+  ),
+  CategoryItem(
+    id: 'healthy',
+    label: 'Sehat',
+    icon: Icons.eco_rounded,
+    itemCount: 3,
+  ),
+  CategoryItem(
+    id: 'fastfood',
+    label: 'Fastfood',
+    icon: Icons.local_cafe_rounded,
+    itemCount: 3,
+  ),
+];

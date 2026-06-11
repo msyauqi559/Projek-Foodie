@@ -4,8 +4,8 @@ import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
 import '../models/order_history_item.dart';
+import '../models/food_item.dart';
 import '../services/app_navigation.dart';
-import '../services/dummy_data_service.dart';
 import '../utils/formatters.dart';
 import '../utils/responsive.dart';
 import '../widgets/back_circle_button.dart';
@@ -23,7 +23,7 @@ class OrderTrackingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final trackingOrder = order ?? DummyDataService.orderHistory.first;
+    final trackingOrder = order ?? _fallbackOrder;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -389,3 +389,30 @@ class _TrackingSummaryRow extends StatelessWidget {
     );
   }
 }
+
+final OrderHistoryItem _fallbackOrder = OrderHistoryItem(
+  id: 'fallback-tracking',
+  food: const FoodItem(
+    id: 'mie-ayam',
+    name: 'Mie Ayam Tunggal Rasa',
+    category: 'Nusantara',
+    address: 'Jl. Imam Bonjol, No.19 Pasuruan',
+    description: 'Masakan Indonesia yang terbuat dari mi kuning direbus mendidih kemudian ditaburi saus kecap khusus beserta daging ayam dan sayuran.',
+    imagePath: AppAssets.mieAyam,
+    price: 15000,
+    rating: 4.9,
+    deliveryTime: '12 min',
+    distance: '900 m',
+    calories: 340,
+    tags: ['Favorite', 'Gurih', 'Fresh'],
+  ),
+  quantity: 1,
+  dateLabel: 'Hari Ini',
+  statusLabel: 'Berhasil',
+  isSuccess: true,
+  total: 19500,
+  promoDiscount: 2000,
+  shippingCost: 5000,
+  tax: 1500,
+  promoCode: '872008',
+);

@@ -179,8 +179,11 @@ class _HomePageState extends State<HomePage> {
           );
         }
 
-        // Ambil 3 menu pertama untuk tampilan highlight
-        final List<FoodItem> highlightMenus = filteredMenus.take(3).toList();
+        // Salin list filteredMenus lalu urutkan dari rating terbesar ke terkecil
+        final List<FoodItem> popularMenus = List<FoodItem>.from(filteredMenus) ..sort((a, b) => b.rating.compareTo(a.rating));
+
+        // Ambil 3 menu acak untuk tampilan highlight
+        final List<FoodItem> highlightMenus = (List<FoodItem>.from(filteredMenus)..shuffle()).take(3).toList();
 
         // Kelompokkan menu berdasarkan kategori untuk section cards
         final Map<String, List<FoodItem>> grouped = {};
@@ -282,11 +285,11 @@ class _HomePageState extends State<HomePage> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
-                  itemCount: filteredMenus.length > 5 ? 5 : filteredMenus.length,
+                  itemCount: popularMenus.length > 5 ? 5 : popularMenus.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(width: AppSpacing.sm),
                   itemBuilder: (context, index) {
-                    final food = filteredMenus[index];
+                    final food = popularMenus[index];
                     return _PopularMenuCard(
                       food: food,
                       onTap: () => AppNavigation.openFoodDetail(context, food),

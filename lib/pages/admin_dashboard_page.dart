@@ -146,49 +146,133 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         }
         final items = snapshot.data ?? [];
         if (items.isEmpty) {
-          return const Center(child: Text('Belum ada menu di database.'));
+          return const Center(child: Text('Belum ada menu di database.', style: TextStyle(color: AppColors.grayText)));
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // Padding bawah longgar karena ada FAB
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 90), // Padding bawah longgar karena ada FAB
           itemCount: items.length,
           itemBuilder: (context, index) {
             final food = items[index];
-            return Card(
-              color: Colors.white,
-              elevation: 1,
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: ReusableImage(
-                    imagePath: food.imagePath,
-                    width: 55,
-                    height: 55,
-                    fit: BoxFit.cover,
+            return Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.borderLight),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
                   ),
-                ),
-                title: Text(food.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                subtitle: Text(
-                  '${food.category} • ${PriceFormatter.toRupiah(food.price)}\n${food.address}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                isThreeLine: true,
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit_rounded, color: Colors.blue),
-                      onPressed: () async {
-                        await Navigator.pushNamed(context, '/admin-form', arguments: food);
-                        _loadMenus(); // Refresh setelah edit
-                      },
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: ReusableImage(
+                        imagePath: food.imagePath,
+                        width: 75,
+                        height: 75,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_rounded, color: Colors.red),
-                      onPressed: () => _deleteMenu(food.dbId!),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  food.category,
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            food.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            PriceFormatter.toRupiah(food.price),
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_rounded, size: 11, color: AppColors.grayText),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  food.address,
+                                  style: const TextStyle(color: AppColors.grayText, fontSize: 11),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        IconButton(
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.blue.shade50,
+                            padding: const EdgeInsets.all(8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: const Icon(Icons.edit_rounded, color: Colors.blue, size: 18),
+                          onPressed: () async {
+                            await Navigator.pushNamed(context, '/admin-form', arguments: food);
+                            _loadMenus(); // Refresh setelah edit
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        IconButton(
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.red.shade50,
+                            padding: const EdgeInsets.all(8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: const Icon(Icons.delete_rounded, color: Colors.red, size: 18),
+                          onPressed: () => _deleteMenu(food.dbId!),
+                        ),
+                      ],
                     ),
                   ],
                 ),

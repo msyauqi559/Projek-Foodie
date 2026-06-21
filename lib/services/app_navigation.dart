@@ -57,12 +57,12 @@ class AppNavigation {
 
   // ——— Katalog & pesanan ———
 
-  static void openFoodDetail(BuildContext context, FoodItem food) {
-    Navigator.pushNamed(context, AppRoutes.detail, arguments: food);
+  static Future<dynamic> openFoodDetail(BuildContext context, FoodItem food) {
+    return Navigator.pushNamed(context, AppRoutes.detail, arguments: food);
   }
 
-  static void openCart(BuildContext context, [FoodItem? food]) {
-    Navigator.pushNamed(context, AppRoutes.cart, arguments: food);
+  static Future<dynamic> openCart(BuildContext context, [FoodItem? food]) {
+    return Navigator.pushNamed(context, AppRoutes.cart, arguments: food);
   }
 
   static void openOrderDetail(BuildContext context, OrderHistoryItem order) {

@@ -39,6 +39,7 @@ class _HomePageState extends State<HomePage> {
 
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
+  String _selectedCategory = 'Semua';
 
   @override
   void initState() {
@@ -92,8 +93,14 @@ class _HomePageState extends State<HomePage> {
 
         final List<FoodItem> filteredMenus = allMenus.where((menu) {
           final query = _searchQuery.toLowerCase();
-          return menu.name.toLowerCase().contains(query) ||
+          final matchesQuery = menu.name.toLowerCase().contains(query) ||
               menu.category.toLowerCase().contains(query);
+          
+          if (_selectedCategory == 'Semua') {
+            return matchesQuery;
+          } else {
+            return matchesQuery && menu.category == _selectedCategory;
+          }
         }).toList();
 
         if (allMenus.isEmpty) {
@@ -107,7 +114,10 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     const Expanded(child: HomeBrandHeader()),
                     CartButton(
-                      onTap: () => AppNavigation.openCart(context),
+                      onTap: () async {
+                        await AppNavigation.openCart(context);
+                        setState(() {});
+                      },
                     ),
                   ],
                 ),
@@ -206,7 +216,10 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   const Expanded(child: HomeBrandHeader()),
                   CartButton(
-                    onTap: () => AppNavigation.openCart(context),
+                    onTap: () async {
+                      await AppNavigation.openCart(context);
+                      setState(() {});
+                    },
                   ),
                 ],
               ),
@@ -228,9 +241,28 @@ class _HomePageState extends State<HomePage> {
                   vertical: 16,
                 ),
               ),
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.md),
 
-              if (_searchQuery.isNotEmpty && filteredMenus.isEmpty)
+              // ── Category Chips Filter ──
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    _buildCategoryChip('Semua', Icons.restaurant_rounded),
+                    const SizedBox(width: 8),
+                    _buildCategoryChip('Nusantara', Icons.ramen_dining_rounded),
+                    const SizedBox(width: 8),
+                    _buildCategoryChip('Sehat', Icons.eco_rounded),
+                    const SizedBox(width: 8),
+                    _buildCategoryChip('Fastfood', Icons.local_cafe_rounded),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              if (filteredMenus.isEmpty)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 40, bottom: 40),
@@ -240,8 +272,8 @@ class _HomePageState extends State<HomePage> {
                         const Icon(Icons.search_off_rounded, size: 64, color: Colors.grey),
                         const SizedBox(height: 12),
                         Text(
-                          'Menu tidak ditemukan',
-                          style: TextStyle(
+                          _searchQuery.isNotEmpty ? 'Menu tidak ditemukan' : 'Kategori kosong',
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: AppColors.textPrimary,
@@ -249,8 +281,10 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Coba cari menu atau kategori makanan lainnya.',
-                          style: TextStyle(fontSize: 13, color: AppColors.grayText),
+                          _searchQuery.isNotEmpty
+                              ? 'Coba cari menu atau kategori makanan lainnya.'
+                              : 'Saat ini belum ada menu di kategori ini.',
+                          style: const TextStyle(fontSize: 13, color: AppColors.grayText),
                         ),
                       ],
                     ),
@@ -261,7 +295,10 @@ class _HomePageState extends State<HomePage> {
                 // ── Promo Banner ──
                 if (promoFood != null)
                   _PromoBanner(
-                    onTap: () => AppNavigation.openFoodDetail(context, promoFood),
+                    onTap: () async {
+                      await AppNavigation.openFoodDetail(context, promoFood);
+                      setState(() {});
+                    },
                   ),
                 if (promoFood != null) const SizedBox(height: AppSpacing.lg),
 
@@ -292,7 +329,10 @@ class _HomePageState extends State<HomePage> {
                     final food = popularMenus[index];
                     return _PopularMenuCard(
                       food: food,
-                      onTap: () => AppNavigation.openFoodDetail(context, food),
+                      onTap: () async {
+                        await AppNavigation.openFoodDetail(context, food);
+                        setState(() {});
+                      },
                     );
                   },
                 ),
@@ -313,11 +353,12 @@ class _HomePageState extends State<HomePage> {
                   child: _HighlightFoodCard(
                     food: highlightMenus[index],
                     rank: index + 1,
-                    onDetailTap: () {
-                      AppNavigation.openFoodDetail(
+                    onDetailTap: () async {
+                      await AppNavigation.openFoodDetail(
                         context,
                         highlightMenus[index],
                       );
+                      setState(() {});
                     },
                   ),
                 ),
@@ -348,8 +389,10 @@ class _HomePageState extends State<HomePage> {
                             final food = entry.value[i];
                             return _MiniMenuCard(
                               food: food,
-                              onTap: () =>
-                                  AppNavigation.openFoodDetail(context, food),
+                              onTap: () async {
+                                await AppNavigation.openFoodDetail(context, food);
+                                setState(() {});
+                              },
                             );
                           },
                         ),
@@ -359,10 +402,67 @@ class _HomePageState extends State<HomePage> {
                 );
               }),
             ],
-            ],
-          ),
-        );
+          ],
+        ),
+      );
+    },
+  );
+}
+
+  Widget _buildCategoryChip(String categoryName, IconData icon) {
+    final isSelected = _selectedCategory == categoryName;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = categoryName;
+        });
       },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.card,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.borderLight.withValues(alpha: 0.8),
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : AppColors.primary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              categoryName,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

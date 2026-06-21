@@ -54,17 +54,18 @@ class _CategoryPageState extends State<CategoryPage> {
   @override
   Widget build(BuildContext context) {
     return FigmaPageBody(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Categories',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Kategori Menu',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
           AppTextField(
             controller: _searchCtrl,
             hintText: 'Cari menu....',
@@ -185,15 +186,32 @@ class _CategoryPageState extends State<CategoryPage> {
                       ((selectedCategory == 'Nusantara' && nusantaraFoods.isEmpty) ||
                        (selectedCategory == 'Sehat' && healthyFoods.isEmpty) ||
                        (selectedCategory == 'Fastfood' && fastFoods.isEmpty)))
-                    const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Text('Belum ada menu di kategori ini.'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.restaurant_rounded, size: 54, color: Colors.orange.shade700),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Kategori Kosong',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Saat ini belum ada menu makanan untuk kategori ini.',
+                            style: TextStyle(color: AppColors.grayText, fontSize: 13),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                 ],
               );
             },
           ),
         ],
+      ),
       ),
     );
   }

@@ -90,106 +90,48 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     return FigmaPageBody(
-      child: Column(
-        children: [
-          Center(
-            child: Text(
-              'Profile',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            Center(
+              child: Text(
+                'Profil Saya',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
             ),
-          ),
-          const SizedBox(height: 22),
-          
-          if (!isProfileFilled)
-            _buildEmptyProfile(context)
-          else
+            const SizedBox(height: 22),
+            
             _buildFilledProfile(context),
 
-          const SizedBox(height: 32),
-          
-          // Tombol Logout
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _showLogoutDialog(context),
-              icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
-              label: const Text('Logout', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger.withValues(alpha: 0.1),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.authButtonRadius),
-                  side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
+            const SizedBox(height: 32),
+            
+            // Tombol Logout
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showLogoutDialog(context),
+                icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
+                label: const Text('Logout', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.danger.withValues(alpha: 0.1),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimensions.authButtonRadius),
+                    side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
-
-  /// Tampilan ketika data profil masih kosong
-  Widget _buildEmptyProfile(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.person_add_alt_1_rounded, size: 40, color: AppColors.primary),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Profil Belum Diisi',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Silakan lengkapi data diri Anda untuk mempermudah proses pemesanan dan pengiriman makanan.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.grayText,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-          ),
-          const SizedBox(height: 28),
-          ReusableButton(
-            label: 'Lengkapi Profil Sekarang',
-            onPressed: _showEditProfileSheet,
-            borderRadius: 12,
-            height: 50,
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Tampilan ketika data profil sudah terisi
   Widget _buildStatItem(BuildContext context, IconData icon, String label, String value) {
     return Column(
@@ -210,12 +152,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// Tampilan ketika data profil sudah terisi
   Widget _buildFilledProfile(BuildContext context) {
-    final name = userProfile?['name'] ?? 'M. Fattah Syauqi';
-    final email = userProfile?['email'] ?? 'msyauqi559@gmail.com';
-    final phone = userProfile?['phone'] ?? '-';
-    final gender = userProfile?['gender'] ?? 'Laki - Laki';
-    final address = userProfile?['address'] ?? '-';
+    final name = userProfile?['name'] ?? 'Pengguna Foodie';
+    final email = userProfile?['email'] ?? '';
+    final rawPhone = userProfile?['phone'] as String?;
+    final rawGender = userProfile?['gender'] as String?;
+    final rawAddress = userProfile?['address'] as String?;
     final photo = userProfile?['photo_path'] as String?;
+
+    final phone = (rawPhone != null && rawPhone.trim().isNotEmpty) ? rawPhone : 'Belum diisi';
+    final gender = (rawGender != null && rawGender.trim().isNotEmpty) ? rawGender : 'Belum diisi';
+    final address = (rawAddress != null && rawAddress.trim().isNotEmpty) ? rawAddress : 'Belum diisi';
+    final hasMissingInfo = phone == 'Belum diisi' || address == 'Belum diisi';
 
     return Stack(
       clipBehavior: Clip.none,
@@ -239,6 +186,54 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           child: Column(
             children: [
+              if (hasMissingInfo)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Colors.orange.shade800, size: 22),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Lengkapi nomor telepon & alamat Anda agar pengiriman pesanan lebih lancar.',
+                          style: TextStyle(
+                            color: Colors.orange.shade900,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      TextButton(
+                        onPressed: _showEditProfileSheet,
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.orange.shade800,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Isi',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Text(
                 name,
                 style: Theme.of(context)
@@ -765,6 +760,8 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPlaceholder = value == 'Belum diisi';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
       decoration: BoxDecoration(
@@ -777,7 +774,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
+          Icon(icon, size: 20, color: isPlaceholder ? Colors.orange.shade700 : AppColors.primary),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -796,6 +793,8 @@ class _DetailRow extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
+                        color: isPlaceholder ? Colors.orange.shade700 : AppColors.textPrimary,
+                        fontStyle: isPlaceholder ? FontStyle.italic : FontStyle.normal,
                       ),
                 ),
               ],

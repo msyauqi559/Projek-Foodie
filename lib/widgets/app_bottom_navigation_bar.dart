@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
-import '../constants/app_spacing.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
   const AppBottomNavigationBar({
@@ -15,22 +14,22 @@ class AppBottomNavigationBar extends StatelessWidget {
 
   static const List<_NavItemData> _items = [
     _NavItemData(
-      label: 'Home',
+      label: 'Beranda',
       icon: Icons.home_outlined,
       selectedIcon: Icons.home_rounded,
     ),
     _NavItemData(
-      label: 'Categories',
+      label: 'Kategori',
       icon: Icons.grid_view,
       selectedIcon: Icons.grid_view_rounded,
     ),
     _NavItemData(
-      label: 'History',
+      label: 'Riwayat',
       icon: Icons.access_time_rounded,
       selectedIcon: Icons.access_time_filled,
     ),
     _NavItemData(
-      label: 'About',
+      label: 'Profil',
       icon: Icons.person_outline_rounded,
       selectedIcon: Icons.person_rounded,
     ),
@@ -39,18 +38,25 @@ class AppBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(4),
-          topRight: Radius.circular(4),
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: AppColors.borderLight.withValues(alpha: 0.8),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(
           _items.length,
           (index) => Expanded(
@@ -83,24 +89,40 @@ class _BottomNavigationItem extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
+        borderRadius: BorderRadius.circular(20),
+        splashColor: AppColors.primary.withValues(alpha: 0.1),
+        highlightColor: Colors.transparent,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
           padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.08)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isSelected ? item.selectedIcon : item.icon,
-                color: AppColors.card,
-                size: isSelected ? 26 : 24,
+              AnimatedScale(
+                scale: isSelected ? 1.15 : 1.0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: Icon(
+                  isSelected ? item.selectedIcon : item.icon,
+                  color: isSelected ? AppColors.primary : AppColors.grayText,
+                  size: 22,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 item.label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.card,
+                      color: isSelected ? AppColors.primary : AppColors.grayText,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: isSelected ? 11 : 10.5,
+                      fontSize: 10.5,
                     ),
               ),
             ],

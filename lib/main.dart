@@ -7,7 +7,7 @@ import 'constants/app_typography.dart';
 import 'services/app_router.dart';
 import 'services/database_helper.dart';
 
-/// Entry point aplikasi — menginisialisasi database sebelum menjalankan app.
+/// Entry point aplikasi — menginisialisasi database sebelum 
 ///
 /// [WidgetsFlutterBinding.ensureInitialized()] WAJIB dipanggil sebelum
 /// operasi async (seperti buka database) di dalam main().

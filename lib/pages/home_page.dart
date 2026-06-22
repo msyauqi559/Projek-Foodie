@@ -954,7 +954,7 @@ class _MiniMenuCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 200,
+        width: 230,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: AppColors.card,
@@ -1001,36 +1001,40 @@ class _MiniMenuCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        color: AppColors.warning,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        food.rating.toStringAsFixed(1),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 10,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: AppColors.warning,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          food.rating.toStringAsFixed(1),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: 10,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 11,
                           color: AppColors.grayText,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.access_time_rounded,
-                        size: 11,
-                        color: AppColors.grayText,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        food.deliveryTime,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 10,
-                          color: AppColors.grayText,
+                        const SizedBox(width: 2),
+                        Text(
+                          food.deliveryTime,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: 10,
+                            color: AppColors.grayText,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),

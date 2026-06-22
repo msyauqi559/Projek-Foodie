@@ -96,11 +96,8 @@ class _BottomNavigationItem extends StatelessWidget {
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeInOut,
           padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.primary.withValues(alpha: 0.08)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+          decoration: const BoxDecoration(
+            color: Colors.transparent,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

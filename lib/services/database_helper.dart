@@ -344,26 +344,15 @@ class DatabaseHelper {
 
   Future<List<FoodItem>> getAllMenus() async {
     if (_useMemoryFallback) {
-      if (_webMenus.isEmpty) {
-        _webMenus.addAll(_initialMenus);
-      }
       return _webMenus.map((map) => FoodItem.fromMap(map)).toList();
     }
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query('tb_menu');
-    if (maps.isEmpty) {
-      await _seedMenuData(db);
-      final List<Map<String, dynamic>> refetched = await db.query('tb_menu');
-      return refetched.map((map) => FoodItem.fromMap(map)).toList();
-    }
     return maps.map((map) => FoodItem.fromMap(map)).toList();
   }
 
   Future<List<FoodItem>> getMenusByCategory(String category) async {
     if (_useMemoryFallback) {
-      if (_webMenus.isEmpty) {
-        _webMenus.addAll(_initialMenus);
-      }
       final filtered = _webMenus.where((m) => m['category'] == category).toList();
       return filtered.map((map) => FoodItem.fromMap(map)).toList();
     }
@@ -373,26 +362,11 @@ class DatabaseHelper {
       where: 'category = ?',
       whereArgs: [category],
     );
-    if (maps.isEmpty) {
-      final all = await db.query('tb_menu');
-      if (all.isEmpty) {
-        await _seedMenuData(db);
-        final List<Map<String, dynamic>> refetched = await db.query(
-          'tb_menu',
-          where: 'category = ?',
-          whereArgs: [category],
-        );
-        return refetched.map((map) => FoodItem.fromMap(map)).toList();
-      }
-    }
     return maps.map((map) => FoodItem.fromMap(map)).toList();
   }
 
   Future<FoodItem?> getMenuById(int id) async {
     if (_useMemoryFallback) {
-      if (_webMenus.isEmpty) {
-        _webMenus.addAll(_initialMenus);
-      }
       final match = _webMenus.where((m) => m['id'] == id).firstOrNull;
       if (match == null) return null;
       return FoodItem.fromMap(match);
@@ -403,20 +377,7 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
-    if (maps.isEmpty) {
-      final all = await db.query('tb_menu');
-      if (all.isEmpty) {
-        await _seedMenuData(db);
-        final List<Map<String, dynamic>> refetched = await db.query(
-          'tb_menu',
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-        if (refetched.isEmpty) return null;
-        return FoodItem.fromMap(refetched.first);
-      }
-      return null;
-    }
+    if (maps.isEmpty) return null;
     return FoodItem.fromMap(maps.first);
   }
 

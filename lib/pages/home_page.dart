@@ -378,7 +378,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       SizedBox(
-                        height: 120,
+                        height: 130,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           padding: EdgeInsets.zero,
@@ -972,7 +972,7 @@ class _MiniMenuCard extends StatelessWidget {
             ReusableImage(
               imagePath: food.imagePath,
               width: 80,
-              height: 90,
+              height: 80,
               borderRadius: 10,
             ),
             const SizedBox(width: 10),

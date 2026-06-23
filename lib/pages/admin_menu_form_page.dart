@@ -104,11 +104,15 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     }
   }
 
+  // Fungsi untuk menampilkan pop-up multi-select dialog pemilihan tags makanan
   Future<void> _showTagsDialog() async {
+    // Membuat list temporer agar pilihan di dialog tidak langsung merubah state utama sebelum diklik 'Pilih'
     final List<String> tempSelected = List.from(_selectedTags);
     await showDialog(
       context: context,
       builder: (context) {
+        // StatefulBuilder digunakan agar state di dalam dialog (seperti checklist) dapat di-update secara responsif
+        // tanpa memicu rebuild seluruh halaman AdminMenuFormPage di belakangnya
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -116,15 +120,16 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView(
-                  shrinkWrap: true,
+                  shrinkWrap: true, // Membuat list menyesuaikan tinggi konten di dalamnya
                   children: _availableTags.map((tag) {
                     final isChecked = tempSelected.contains(tag);
                     return CheckboxListTile(
                       activeColor: AppColors.primary,
                       value: isChecked,
                       title: Text(tag),
-                      controlAffinity: ListTileControlAffinity.leading,
+                      controlAffinity: ListTileControlAffinity.leading, // Checklist di sebelah kiri teks
                       onChanged: (bool? checked) {
+                        // Memperbarui checklist secara lokal di dalam dialog menggunakan setDialogState
                         setDialogState(() {
                           if (checked == true) {
                             if (!tempSelected.contains(tag)) {
@@ -140,10 +145,12 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                 ),
               ),
               actions: [
+                // Tombol Batal untuk membatalkan semua pilihan temporer
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Batal', style: TextStyle(color: Colors.grey)),
                 ),
+                // Tombol Pilih untuk menyimpan pilihan temporer ke state utama dan menutup dialog
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -152,6 +159,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                   onPressed: () {
                     setState(() {
                       _selectedTags = List.from(tempSelected);
+                      // Menggabungkan tag terpilih menjadi teks koma (contoh: "Pedas, Nusantara") untuk ditampilkan di form
                       _tagsCtrl.text = _selectedTags.join(', ');
                     });
                     Navigator.pop(context);

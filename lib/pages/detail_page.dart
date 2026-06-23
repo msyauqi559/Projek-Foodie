@@ -221,6 +221,7 @@ class DetailPage extends StatelessWidget {
                                       ),
                                 ),
                                  const SizedBox(height: 24),
+                                 // ── Menampilkan Tags Makanan secara dinamis jika tersedia ──
                                  if (food.tags.isNotEmpty) ...[
                                    Text(
                                      'Tags Makanan',
@@ -234,6 +235,7 @@ class DetailPage extends StatelessWidget {
                                          ),
                                    ),
                                    const SizedBox(height: 12),
+                                   // Wrap otomatis merapikan posisi chip ke baris berikutnya jika melebihi lebar layar
                                    Wrap(
                                      spacing: 8,
                                      runSpacing: 8,

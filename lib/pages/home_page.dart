@@ -33,22 +33,34 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  /// Future yang menyimpan hasil query database.
-  /// Dipanggil sekali di [initState], atau di-refresh saat diperlukan.
+  // Menampung Future untuk memuat daftar menu secara asinkron dari SQLite
   late Future<List<FoodItem>> _menusFuture;
 
+  // Controller untuk mendeteksi input teks pencarian menu
   final TextEditingController _searchCtrl = TextEditingController();
+  
+  // Menyimpan string pencarian aktif saat ini
   String _searchQuery = '';
+  
+  // Kategori filter aktif saat ini (default: 'Semua')
   String _selectedCategory = 'Semua';
 
+  // Cache lokal untuk menyimpan daftar menu mentah guna mendeteksi perubahan data
   List<FoodItem>? _cachedAllMenus;
+  
+  // Menyimpan 3 menu rekomendasi acak (highlight) yang di-cache agar tidak di-shuffle terus-menerus
   List<FoodItem> _highlightMenus = [];
+  
+  // Menyimpan menu Salad yang digunakan untuk promo banner
   FoodItem? _promoFood;
 
   @override
   void initState() {
     super.initState();
+    // Memulai pemuatan data dari SQLite saat widget pertama kali dibuat
     _loadMenus();
+    
+    // Menambahkan listener untuk memperbarui state pencarian ketika user mengetik
     _searchCtrl.addListener(() {
       setState(() {
         _searchQuery = _searchCtrl.text.trim();
@@ -58,44 +70,46 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    // Membuang controller dari memori untuk mencegah kebocoran memori (memory leaks)
     _searchCtrl.dispose();
     super.dispose();
   }
 
-  /// Memuat data menu dari SQLite.
+  // Mengambil daftar menu dari SQLite melalui class Singleton DatabaseHelper
   void _loadMenus() {
     _menusFuture = DatabaseHelper.instance.getAllMenus();
   }
 
-  /// Refresh data — dipanggil setelah kembali dari halaman manage menu.
+  // Dipanggil setelah admin menambah/mengedit/menghapus menu untuk me-refresh data
   void refreshData() {
     setState(() {
-      _cachedAllMenus = null;
+      _cachedAllMenus = null; // Menghapus cache agar data diacak dan dihitung ulang
       _loadMenus();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // FutureBuilder digunakan untuk merender widget secara dinamis berdasarkan status pemuatan data
     return FutureBuilder<List<FoodItem>>(
       future: _menusFuture,
       builder: (context, snapshot) {
-        // ── State 1: Loading ──
+        // STATE 1: Data sedang dimuat (Loading)
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.primary),
           );
         }
 
-        // ── State 2: Error ──
+        // STATE 2: Terjadi error saat memuat data
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
 
-        // ── State 3: Data Ready ──
+        // STATE 3: Data berhasil dimuat (Ready)
         final List<FoodItem> allMenus = snapshot.data ?? [];
 
+        // Menyaring (filter) menu berdasarkan kategori terpilih dan kata kunci pencarian
         final List<FoodItem> filteredMenus = allMenus.where((menu) {
           final query = _searchQuery.toLowerCase();
           final matchesQuery = menu.name.toLowerCase().contains(query) ||
@@ -108,13 +122,14 @@ class _HomePageState extends State<HomePage> {
           }
         }).toList();
 
+        // Tampilan khusus jika database menu kosong (Empty State)
         if (allMenus.isEmpty) {
           return FigmaPageBody(
             hasBottomNavBar: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header: Logo + Notifikasi ──
+                // Header brand dan ikon tombol keranjang
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -129,7 +144,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
-                // ── Search Bar ──
+                // Kolom pencarian (Search Bar) - terkunci jika menu kosong
                 AppTextField(
                   controller: _searchCtrl,
                   hintText: 'Cari menu....',
@@ -138,7 +153,7 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: AppDimensions.homeSearchRadius,
                   suffixIcon: _searchQuery.isNotEmpty ? Icons.clear_rounded : null,
                   onSuffixTap: () {
-                    _searchCtrl.clear(); //Bersihkan teks jika icon di klik
+                    _searchCtrl.clear();
                   },
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
@@ -148,7 +163,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 60),
 
-                // ── Beautiful Empty State Illustration & Message ──
+                // Ilustrasi dan pesan bahwa menu belum diunggah oleh admin
                 Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -194,20 +209,23 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
-        // Cek jika data menu baru selesai diload atau berubah, baru kita proses list-nya
-        // untuk menghemat CPU (tidak melakukan sorting & shuffle pada setiap frame rebuild/ketikan)
+
+        // OPTIMASI PERFORMA:
+        // Cek jika data menu baru selesai diload atau berubah dari database, baru kita proses ulang list-nya.
+        // Ini untuk mencegah pemanggilan .shuffle() dan pengacakan widget berulang-ulang saat user mengetik di search bar.
         if (_cachedAllMenus == null || _cachedAllMenus!.length != allMenus.length) {
           _cachedAllMenus = allMenus;
-          // Acak highlight menu sekali saja saat data pertama kali dimuat
+          // Mengambil 3 menu secara acak sekali saja untuk dijadikan highlight hari ini
           _highlightMenus = (List<FoodItem>.from(allMenus)..shuffle()).take(3).toList();
+          // Mencari makanan yang mengandung kata 'salad' untuk dipromosikan di banner
           _promoFood = allMenus.where((m) => m.name.toLowerCase().contains('salad')).firstOrNull;
         }
 
-        // Sort menu populer berdasarkan rating dari data terfilter
+        // Mengurutkan daftar menu populer berdasarkan rating tertinggi
         final List<FoodItem> popularMenus = List<FoodItem>.from(filteredMenus)
           ..sort((a, b) => b.rating.compareTo(a.rating));
 
-        // Kelompokkan menu terfilter berdasarkan kategori
+        // Mengelompokkan menu yang telah difilter berdasarkan nama kategorinya
         final Map<String, List<FoodItem>> grouped = {};
         for (final menu in filteredMenus) {
           grouped.putIfAbsent(menu.category, () => []).add(menu);
@@ -217,11 +235,11 @@ class _HomePageState extends State<HomePage> {
         final FoodItem? promoFood = _promoFood;
 
         return FigmaPageBody(
-          hasBottomNavBar: true,
+          hasBottomNavBar: true, // Menambahkan padding bawah agar tidak tertutup bottom nav melayang
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header: Logo + Notifikasi ──
+              // Header brand dan tombol keranjang
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -236,7 +254,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // ── Search Bar ──
+              // Search Bar - Input pencarian menu secara langsung
               AppTextField(
                 controller: _searchCtrl,
                 hintText: 'Cari menu....',

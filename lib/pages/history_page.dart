@@ -53,6 +53,7 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return FigmaPageBody(
+      hasBottomNavBar: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

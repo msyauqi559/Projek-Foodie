@@ -10,16 +10,22 @@ class FigmaPageBody extends StatelessWidget {
     required this.child,
     this.padding,
     this.scrollable = true,
+    this.hasBottomNavBar = false,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final bool scrollable;
+  final bool hasBottomNavBar;
 
   @override
   Widget build(BuildContext context) {
-    final EdgeInsetsGeometry resolvedPadding =
+    EdgeInsetsGeometry resolvedPadding =
         padding ?? Responsive.pagePadding(context);
+
+    if (hasBottomNavBar) {
+      resolvedPadding = resolvedPadding.add(const EdgeInsets.only(bottom: 100));
+    }
 
     final Widget content = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: Responsive.contentWidth(context)),

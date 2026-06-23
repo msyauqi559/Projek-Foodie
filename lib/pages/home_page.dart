@@ -41,6 +41,10 @@ class _HomePageState extends State<HomePage> {
   String _searchQuery = '';
   String _selectedCategory = 'Semua';
 
+  List<FoodItem>? _cachedAllMenus;
+  List<FoodItem> _highlightMenus = [];
+  FoodItem? _promoFood;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +71,7 @@ class _HomePageState extends State<HomePage> {
   /// Refresh data — dipanggil setelah kembali dari halaman manage menu.
   void refreshData() {
     setState(() {
+      _cachedAllMenus = null;
       _loadMenus();
     });
   }
@@ -105,6 +110,7 @@ class _HomePageState extends State<HomePage> {
 
         if (allMenus.isEmpty) {
           return FigmaPageBody(
+            hasBottomNavBar: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -188,25 +194,30 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
+        // Cek jika data menu baru selesai diload atau berubah, baru kita proses list-nya
+        // untuk menghemat CPU (tidak melakukan sorting & shuffle pada setiap frame rebuild/ketikan)
+        if (_cachedAllMenus == null || _cachedAllMenus!.length != allMenus.length) {
+          _cachedAllMenus = allMenus;
+          // Acak highlight menu sekali saja saat data pertama kali dimuat
+          _highlightMenus = (List<FoodItem>.from(allMenus)..shuffle()).take(3).toList();
+          _promoFood = allMenus.where((m) => m.name.toLowerCase().contains('salad')).firstOrNull;
+        }
 
-        // Salin list filteredMenus lalu urutkan dari rating terbesar ke terkecil
-        final List<FoodItem> popularMenus = List<FoodItem>.from(filteredMenus) ..sort((a, b) => b.rating.compareTo(a.rating));
+        // Sort menu populer berdasarkan rating dari data terfilter
+        final List<FoodItem> popularMenus = List<FoodItem>.from(filteredMenus)
+          ..sort((a, b) => b.rating.compareTo(a.rating));
 
-        // Ambil 3 menu acak untuk tampilan highlight
-        final List<FoodItem> highlightMenus = (List<FoodItem>.from(filteredMenus)..shuffle()).take(3).toList();
-
-        // Kelompokkan menu berdasarkan kategori untuk section cards
+        // Kelompokkan menu terfilter berdasarkan kategori
         final Map<String, List<FoodItem>> grouped = {};
         for (final menu in filteredMenus) {
           grouped.putIfAbsent(menu.category, () => []).add(menu);
         }
 
-        // Menu Salad untuk promo banner (cari yang kategori Sehat)
-        final FoodItem? promoFood = allMenus
-            .where((m) => m.name.toLowerCase().contains('salad'))
-            .firstOrNull;
+        final List<FoodItem> highlightMenus = _highlightMenus;
+        final FoodItem? promoFood = _promoFood;
 
         return FigmaPageBody(
+          hasBottomNavBar: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -83,6 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return const FigmaPageBody(
+        hasBottomNavBar: true,
         child: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
@@ -90,6 +91,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     return FigmaPageBody(
+      hasBottomNavBar: true,
       child: SingleChildScrollView(
         child: Column(
           children: [
@@ -126,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 120),
           ],
         ),
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'back_circle_button.dart';
+import '../constants/app_colors.dart';
 
 /// Header Figma: tombol back kiri + judul tengah 22px.
 class PageHeader extends StatelessWidget {
@@ -18,20 +18,29 @@ class PageHeader extends StatelessWidget {
     return SizedBox(
       height: 48,
       child: Stack(
-      alignment: Alignment.center,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: BackCircleButton(onTap: onBack),
-        ),
-        Text(
-          title,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
+        alignment: Alignment.center,
+        children: [
+          if (onBack != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 20,
+                  color: AppColors.textPrimary,
+                ),
+                onPressed: onBack,
               ),
-        ),
-      ],
+            ),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+          ),
+        ],
       ),
     );
   }

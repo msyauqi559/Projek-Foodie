@@ -30,6 +30,23 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
 
+  final List<String> _availableTags = [
+    'Pedas',
+    'Manis',
+    'Gurih',
+    'Asin',
+    'Hangat',
+    'Dingin',
+    'Sehat',
+    'Populer',
+    'Favorit',
+    'Crispy',
+    'Daging',
+    'Mie',
+    'Rempah',
+  ];
+  List<String> _selectedTags = [];
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +56,14 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     _addrCtrl = TextEditingController(text: f?.address ?? 'Jl. Diponegoro Kota Pasuruan');
     _descCtrl = TextEditingController(text: f?.description ?? '');
     _priceCtrl = TextEditingController(text: f?.price.toStringAsFixed(0) ?? '');
-    _tagsCtrl = TextEditingController(text: f?.tags.join(',') ?? 'Favorite,Gurih');
+    
+    _selectedTags = f?.tags.map((e) => e.trim()).where((e) => e.isNotEmpty).toList() ?? ['Favorit', 'Gurih'];
+    for (final tag in _selectedTags) {
+      if (!_availableTags.contains(tag)) {
+        _availableTags.add(tag);
+      }
+    }
+    _tagsCtrl = TextEditingController(text: _selectedTags.join(', '));
     _imageCtrl = TextEditingController(text: f?.imagePath ?? '');
   }
 
@@ -80,6 +104,68 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     }
   }
 
+  Future<void> _showTagsDialog() async {
+    final List<String> tempSelected = List.from(_selectedTags);
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Pilih Tags Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView(
+                  shrinkWrap: true,
+                  children: _availableTags.map((tag) {
+                    final isChecked = tempSelected.contains(tag);
+                    return CheckboxListTile(
+                      activeColor: AppColors.primary,
+                      value: isChecked,
+                      title: Text(tag),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (bool? checked) {
+                        setDialogState(() {
+                          if (checked == true) {
+                            if (!tempSelected.contains(tag)) {
+                              tempSelected.add(tag);
+                            }
+                          } else {
+                            tempSelected.remove(tag);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _selectedTags = List.from(tempSelected);
+                      _tagsCtrl.text = _selectedTags.join(', ');
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Pilih'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _saveData() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -101,11 +187,11 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
       description: _descCtrl.text,
       imagePath: _imageCtrl.text.trim(),
       price: double.parse(_priceCtrl.text),
-      rating: widget.foodToEdit?.rating ?? 5.0, // Default rating untuk menu baru
+      rating: widget.foodToEdit?.rating ?? 5.0,
       deliveryTime: widget.foodToEdit?.deliveryTime ?? '15 min',
       distance: widget.foodToEdit?.distance ?? '1.2 km',
       calories: widget.foodToEdit?.calories ?? 250,
-      tags: _tagsCtrl.text.split(',').map((e) => e.trim()).toList(),
+      tags: _selectedTags,
     );
 
     if (widget.foodToEdit == null) {
@@ -196,13 +282,19 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Tags
-                  TextFormField(
-                    controller: _tagsCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'Tags (Pisahkan dengan Koma)',
-                      hintText: 'Cth: Pedas,Best Seller',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  // Tags Multi-Select Dropdown
+                  GestureDetector(
+                    onTap: _showTagsDialog,
+                    child: AbsorbPointer(
+                      child: TextFormField(
+                        controller: _tagsCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Tags Makanan (Bisa Pilih Lebih dari Satu)',
+                          suffixIcon: const Icon(Icons.arrow_drop_down_rounded, size: 28),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        validator: (v) => _selectedTags.isEmpty ? 'Pilih minimal satu tag' : null,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),

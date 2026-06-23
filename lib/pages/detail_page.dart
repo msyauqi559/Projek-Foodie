@@ -220,7 +220,47 @@ class DetailPage extends StatelessWidget {
                                         fontWeight: FontWeight.w500,
                                       ),
                                 ),
-                                const SizedBox(height: 40),
+                                 const SizedBox(height: 24),
+                                 if (food.tags.isNotEmpty) ...[
+                                   Text(
+                                     'Tags Makanan',
+                                     style: Theme.of(context)
+                                         .textTheme
+                                         .titleMedium
+                                         ?.copyWith(
+                                           fontSize: 16,
+                                           fontWeight: FontWeight.w800,
+                                           color: AppColors.textPrimary,
+                                         ),
+                                   ),
+                                   const SizedBox(height: 12),
+                                   Wrap(
+                                     spacing: 8,
+                                     runSpacing: 8,
+                                     children: food.tags.map((tag) {
+                                       return Container(
+                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                         decoration: BoxDecoration(
+                                           color: AppColors.primary.withValues(alpha: 0.08),
+                                           borderRadius: BorderRadius.circular(20),
+                                           border: Border.all(
+                                             color: AppColors.primary.withValues(alpha: 0.15),
+                                             width: 1,
+                                           ),
+                                         ),
+                                         child: Text(
+                                           '#$tag',
+                                           style: const TextStyle(
+                                             color: AppColors.primary,
+                                             fontWeight: FontWeight.bold,
+                                             fontSize: 12,
+                                           ),
+                                         ),
+                                       );
+                                     }).toList(),
+                                   ),
+                                 ],
+                                 const SizedBox(height: 40),
                                 Center(
                                   child: FractionallySizedBox(
                                     widthFactor: 1.0,

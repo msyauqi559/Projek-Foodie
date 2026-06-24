@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../constants/app_colors.dart';
 import '../services/app_navigation.dart';
 import '../constants/app_dimensions.dart';
@@ -384,6 +383,7 @@ class _ProfilePageState extends State<ProfilePage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        String? validationError;
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Container(
@@ -625,6 +625,34 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 24),
 
+                    if (validationError != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.danger.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                validationError!,
+                                style: const TextStyle(
+                                  color: AppColors.danger,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
                     // Save Button
                     SizedBox(
                       width: double.infinity,
@@ -634,14 +662,22 @@ class _ProfilePageState extends State<ProfilePage> {
                           if (nameController.text.trim().isEmpty ||
                               phoneController.text.trim().isEmpty ||
                               addressController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Semua field wajib diisi!'),
-                                backgroundColor: AppColors.danger,
-                              ),
-                            );
+                            setModalState(() {
+                              validationError = 'Semua field wajib diisi!';
+                            });
                             return;
                           }
+                          if (phoneController.text.trim().length < 12) {
+                            setModalState(() {
+                              validationError = 'Nomor telepon tidak valid (minimal 12 digit)!';
+                            });
+                            return;
+                          } 
+                          
+                          setModalState(() {
+                            validationError = null;
+                          });
+
                           await DatabaseHelper.instance.updateUserProfile(
                             userId: loggedInUserId!,
                             name: nameController.text,
@@ -668,8 +704,6 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
-
-
 
   Future<void> _showLogoutDialog(BuildContext parentContext) {
     return showModalBottomSheet<void>(

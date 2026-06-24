@@ -15,9 +15,7 @@ import '../services/database_helper.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key, this.food});
-
   final FoodItem? food;
-
   @override
   State<CartPage> createState() => _CartPageState();
 }

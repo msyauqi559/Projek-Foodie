@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/food_item.dart';
 import '../models/order_history_item.dart';
@@ -21,8 +22,24 @@ class AppNavigation {
 
   // ——— Splash & Auth ———
 
-  static void finishSplash(BuildContext context) {
-    Navigator.pushReplacementNamed(context, AppRoutes.auth);
+  static Future<void> finishSplash(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final int? userId = prefs.getInt('user_id');
+
+    if (userId != null) {
+      if (!context.mounted) return;
+      if (userId == -1) {
+        // Jika login sebelumnya adalah admin, langsung masuk dashboard admin
+        Navigator.pushReplacementNamed(context, AppRoutes.admin);
+      } else {
+        // Jika login sebelumnya adalah user biasa, langsung masuk main shell
+        Navigator.pushReplacementNamed(context, AppRoutes.shell);
+      }
+    } else {
+      if (!context.mounted) return;
+      // Jika belum login, tampilkan layar login
+      Navigator.pushReplacementNamed(context, AppRoutes.auth);
+    }
   }
 
   static void openLogin(BuildContext context) {

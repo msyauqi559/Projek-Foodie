@@ -16,7 +16,7 @@ class BackCircleButton extends StatelessWidget {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: Material(
-        color: AppColors.backButton,
+        color: AppColors.primary,
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -26,7 +26,7 @@ class BackCircleButton extends StatelessWidget {
             child: Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 18,
-              color: AppColors.textPrimary,
+              color: Colors.white,
             ),
           ),
         ),

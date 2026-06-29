@@ -21,16 +21,16 @@ class OrderDetailPage extends StatelessWidget {
       body: FigmaPageBody(
         padding: const EdgeInsets.fromLTRB(
           AppDimensions.screenHorizontal,
-          12,
+          15,
           AppDimensions.screenHorizontal,
-          24,
+          85,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             PageHeader(
               title: 'Detail',
-              onBack: () => AppNavigation.back(context),
+              onBack: () => AppNavigation.back(context),             
             ),
             const SizedBox(height: 12),
             Container(
@@ -129,7 +129,7 @@ class OrderDetailPage extends StatelessWidget {
                     : () {
                         final String message;
                         if (order.statusLabel == 'Belum Membayar') {
-                          message = 'Status saat ini: Belum Membayar. Hubungi admin untuk konfirmasi pembayaran.';
+                          message = 'Harap tunggu konfirmasi dari Admin.';
                         } else {
                           message = 'Transaksi ini telah dinyatakan Gagal. Silakan melakukan pesanan ulang.';
                         }

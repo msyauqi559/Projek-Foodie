@@ -502,15 +502,19 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                   width: 1,
                                 ),
                               ),
-                              child: ReusableImage(
-                                imagePath:
-                                    (order.userPhotoPath != null &&
-                                        order.userPhotoPath!.isNotEmpty)
-                                    ? order.userPhotoPath!
-                                    : AppAssets.user,
-                                fit: BoxFit.cover,
-                                borderRadius: 15,
-                              ),
+                              child:
+                                  (order.userPhotoPath != null &&
+                                      order.userPhotoPath!.isNotEmpty)
+                                  ? ReusableImage(
+                                      imagePath: order.userPhotoPath!,
+                                      fit: BoxFit.cover,
+                                      borderRadius: 15,
+                                    )
+                                  : const Icon(
+                                      Icons.person_rounded,
+                                      color: AppColors.primary,
+                                      size: 18,
+                                    ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(

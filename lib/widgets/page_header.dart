@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foodie_1/widgets/back_circle_button.dart';
 
 import '../constants/app_colors.dart';
 
@@ -23,13 +24,8 @@ class PageHeader extends StatelessWidget {
           if (onBack != null)
             Align(
               alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 20,
-                  color: AppColors.textPrimary,
-                ),
-                onPressed: onBack,
+              child: BackCircleButton(
+                onTap: onBack,
               ),
             ),
           Text(

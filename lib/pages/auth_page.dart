@@ -21,10 +21,12 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
+  // 1. Variabel State untuk mengelola tampilan halaman atau penampung status (State)
   bool isLogin = true;
   bool isPasswordHidden = true;
   bool rememberMe = false;
 
+  // 2. Controller untuk mengambil input form dari user
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -35,6 +37,15 @@ class _AuthPageState extends State<AuthPage> {
     _loadSavedCredentials();
   }
 
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  // Membaca email & password yang tersimpan di HP
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     final savedEmail = prefs.getString('saved_email');
@@ -50,11 +61,12 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
-  Future<void> _saveCredentials() async {
+  // Menyimpan email & password ke memori HP
+  Future<void> _savedCredential() async {
     final prefs = await SharedPreferences.getInstance();
     if (rememberMe) {
       await prefs.setString('saved_email', emailController.text.trim());
-      await prefs.setString('saved_password', passwordController.text);
+      await prefs.setString('saved_password', passwordController.text.trim());
       await prefs.setBool('remember_me', true);
     } else {
       await prefs.remove('saved_email');
@@ -63,14 +75,7 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
-
+  // Menampilkan pesan pop-up singkat di bawah layar
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -85,6 +90,7 @@ class _AuthPageState extends State<AuthPage> {
     final email = emailController.text.trim();
     final password = passwordController.text;
 
+    // 1. Validasi input email dan password
     final emailErr = AuthValidators.emailError(email);
     if (emailErr != null) {
       _showMessage(emailErr);
@@ -97,32 +103,36 @@ class _AuthPageState extends State<AuthPage> {
       return;
     }
 
-    // Bypass khusus Admin
+    // 2. Login Khusu Admin
     if (email == 'admin@gmail.com' && password == 'admin123') {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('user_id', -1);
       await prefs.setString('user_name', 'Admin Foodie');
       await prefs.setString('user_email', 'admin@gmail.com');
       if (rememberMe) {
-        await _saveCredentials();
+        await _savedCredential();
       }
       if (!mounted) return;
       AppNavigation.openAdmin(context);
       return;
     }
 
+    // 3. Proses Login atau Register User
     if (isLogin) {
-      // LOGIC LOGIN SQLITE
+      // Proses Login SQLite (Menggunakan 'await' karena mengakses DB lokal)
+
       final result = await DatabaseHelper.instance.loginUser(email, password);
       if (result['success'] == true) {
         final prefs = await SharedPreferences.getInstance();
         final user = result['user'] as Map<String, dynamic>;
+
+        // Simpan data login user saat ini
         await prefs.setInt('user_id', user['id'] as int);
         await prefs.setString('user_name', user['name'] as String);
         await prefs.setString('user_email', user['email'] as String);
 
         if (rememberMe) {
-          await _saveCredentials();
+          await _savedCredential();
         }
         if (!mounted) return;
         AppNavigation.onLoginSuccess(context);
@@ -130,14 +140,18 @@ class _AuthPageState extends State<AuthPage> {
         _showMessage(result['message']);
       }
     } else {
-      // LOGIC REGISTER SQLITE
+      //Proses Register
       final name = nameController.text.trim();
       if (name.isEmpty) {
         _showMessage('Masukkan username');
         return;
       }
 
-      final result = await DatabaseHelper.instance.registerUser(name, email, password);
+      final result = await DatabaseHelper.instance.registerUser(
+        name,
+        email,
+        password,
+      );
 
       if (result['success'] == true) {
         setState(() {
@@ -145,7 +159,7 @@ class _AuthPageState extends State<AuthPage> {
           nameController.clear();
           passwordController.clear();
         });
-        _showMessage('Registrasi berhasil. Silakan login.');
+        _showMessage('Register berhasil. Silahkan login.');
       } else {
         _showMessage(result['message']);
       }
@@ -174,33 +188,26 @@ class _AuthPageState extends State<AuthPage> {
                     fit: BoxFit.contain,
                     borderRadius: 0,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isLogin ? 'Login!' : 'Registrasi!',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                        ),
-                  ),
                   const SizedBox(height: 10),
                   Text(
-                    isLogin
-                        ? 'Tolong masukkan akun anda di sini'
-                        : 'Daftarkan akun anda sekarang',
+                    isLogin ? 'Selamat Datang!' : 'Daftar akun anda Sekarang',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 40),
+
+                  // Tab Sqitcher Login / Register
                   _AuthSwitcher(
                     isLogin: isLogin,
                     onLoginTap: () => setState(() => isLogin = true),
                     onRegisterTap: () => setState(() => isLogin = false),
                   ),
                   const SizedBox(height: 46),
+
+                  // Form Input Username (Hanya muncul jika di tab Register)
                   if (!isLogin) ...[
                     AppTextField(
                       controller: nameController,
@@ -209,12 +216,13 @@ class _AuthPageState extends State<AuthPage> {
                       borderColor: AppColors.borderLight,
                       borderRadius: AppDimensions.authFieldRadius,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
                         vertical: 18,
+                        horizontal: 16,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
+                  // Form Input Email
                   AppTextField(
                     controller: emailController,
                     hintText: 'Masukkan Email',
@@ -228,6 +236,8 @@ class _AuthPageState extends State<AuthPage> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
+
+                  // Form Input Password
                   AppTextField(
                     controller: passwordController,
                     hintText: 'Masukkan Password',
@@ -247,6 +257,8 @@ class _AuthPageState extends State<AuthPage> {
                     ),
                   ),
                   const SizedBox(height: 26),
+
+                  // Pilihan Remeber Me (Login) / Sudah Punya Akun (Register)
                   if (isLogin)
                     Row(
                       children: [
@@ -258,9 +270,14 @@ class _AuthPageState extends State<AuthPage> {
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: rememberMe ? AppColors.primary : AppColors.card,
+                              color: rememberMe
+                                  ? AppColors.primary
+                                  : AppColors.card,
                               borderRadius: BorderRadius.circular(7),
-                              border: Border.all(color: AppColors.borderLight, width: 1.5),
+                              border: Border.all(
+                                color: AppColors.borderLight,
+                                width: 1.5,
+                              ),
                             ),
                             child: rememberMe
                                 ? const Icon(
@@ -273,9 +290,9 @@ class _AuthPageState extends State<AuthPage> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Ingat saya',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                fontSize: 14,
+                          'Ingat Sata',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
@@ -289,7 +306,8 @@ class _AuthPageState extends State<AuthPage> {
                         onTap: () => setState(() => isLogin = true),
                         child: Text(
                           'Sudah punya akun?',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
                                 color: AppColors.primary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -298,6 +316,8 @@ class _AuthPageState extends State<AuthPage> {
                       ),
                     ),
                   const SizedBox(height: 30),
+
+                  // Tombol Login / Register Utama
                   ReusableButton(
                     label: isLogin ? 'Login' : 'Registrasi',
                     onPressed: _submit,
@@ -344,6 +364,7 @@ class _AuthSwitcher extends StatelessWidget {
             ),
             child: Stack(
               children: [
+                // Animasi background pill geser
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
@@ -358,6 +379,8 @@ class _AuthSwitcher extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                // Teks Tab (Login & Register)
                 Row(
                   children: [
                     Expanded(
@@ -369,7 +392,7 @@ class _AuthSwitcher extends StatelessWidget {
                     ),
                     Expanded(
                       child: _AuthTabLabel(
-                        label: 'Registrasi',
+                        label: 'Register',
                         isActive: !isLogin,
                         onTap: onRegisterTap,
                       ),
@@ -407,10 +430,10 @@ class _AuthTabLabel extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: isActive ? AppColors.card : AppColors.dark,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: isActive ? AppColors.card : AppColors.dark,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),

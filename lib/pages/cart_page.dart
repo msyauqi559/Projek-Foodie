@@ -43,7 +43,7 @@ class _CartPageState extends State<CartPage> {
   }
 
   double get _tax => _subtotal * _taxRate;
-  
+
   double get _total {
     if (_subtotal == 0) return 0;
     return _subtotal - _promoDiscount + _shippingCost + _tax;
@@ -71,7 +71,9 @@ class _CartPageState extends State<CartPage> {
       if (menuDbId == null) {
         // Cari menu di DB berdasarkan nama
         final allMenus = await DatabaseHelper.instance.getAllMenus();
-        final match = allMenus.where((m) => m.name == widget.food!.name).firstOrNull;
+        final match = allMenus
+            .where((m) => m.name == widget.food!.name)
+            .firstOrNull;
         if (match != null) {
           menuDbId = match.dbId;
         } else {
@@ -99,7 +101,9 @@ class _CartPageState extends State<CartPage> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Hapus Item'),
-          content: const Text('Apakah Anda ingin menghapus item ini dari keranjang?'),
+          content: const Text(
+            'Apakah Anda ingin menghapus item ini dari keranjang?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -142,7 +146,9 @@ class _CartPageState extends State<CartPage> {
         .where((item) => selectedCartItemIds.contains(item['id']))
         .fold<int>(0, (sum, item) => sum + (item['quantity'] as int));
 
-    final double mockPrice = selectedQuantitySum > 0 ? _subtotal / selectedQuantitySum : 0;
+    final double mockPrice = selectedQuantitySum > 0
+        ? _subtotal / selectedQuantitySum
+        : 0;
 
     final FoodItem mockFood = FoodItem(
       id: 'cart-preview',
@@ -166,7 +172,20 @@ class _CartPageState extends State<CartPage> {
       userId: loggedInUserId ?? 2,
       dateLabel: () {
         final now = DateTime.now();
-        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        final months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'Mei',
+          'Jun',
+          'Jul',
+          'Agu',
+          'Sep',
+          'Okt',
+          'Nov',
+          'Des',
+        ];
         return '${now.day} ${months[now.month - 1]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
       }(),
       statusLabel: 'Belum Membayar',
@@ -189,6 +208,18 @@ class _CartPageState extends State<CartPage> {
             ),
             child: Column(
               children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.screenHorizontal,
+                    16,
+                    AppDimensions.screenHorizontal,
+                    0,
+                  ),
+                  child: PageHeader(
+                    title: 'My Cart',
+                    onBack: () => AppNavigation.back(context),
+                  ),
+                ),
                 Expanded(
                   child: cartItems.isEmpty
                       ? _buildEmptyState()
@@ -202,22 +233,19 @@ class _CartPageState extends State<CartPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              PageHeader(
-                                title: 'My Cart',
-                                onBack: () => AppNavigation.back(context),
-                              ),
-                              const SizedBox(height: 24),
                               ListView.separated(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: cartItems.length,
-                                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 16),
                                 itemBuilder: (context, index) {
                                   final item = cartItems[index];
                                   final FoodItem food = item['food'];
                                   final int qty = item['quantity'];
                                   final int cartId = item['id'];
-                                  final bool isChecked = selectedCartItemIds.contains(cartId);
+                                  final bool isChecked = selectedCartItemIds
+                                      .contains(cartId);
 
                                   return Row(
                                     children: [
@@ -225,16 +253,23 @@ class _CartPageState extends State<CartPage> {
                                         value: isChecked,
                                         activeColor: AppColors.primary,
                                         checkColor: AppColors.card,
-                                        side: const BorderSide(color: AppColors.grayText, width: 1.5),
+                                        side: const BorderSide(
+                                          color: AppColors.grayText,
+                                          width: 1.5,
+                                        ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(5),
+                                          borderRadius: BorderRadius.circular(
+                                            5,
+                                          ),
                                         ),
                                         onChanged: (val) {
                                           setState(() {
                                             if (val == true) {
                                               selectedCartItemIds.add(cartId);
                                             } else {
-                                              selectedCartItemIds.remove(cartId);
+                                              selectedCartItemIds.remove(
+                                                cartId,
+                                              );
                                             }
                                           });
                                         },
@@ -245,27 +280,35 @@ class _CartPageState extends State<CartPage> {
                                           food: food,
                                           priceColor: AppColors.primary,
                                           trailing: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               _CartQtyButton(
                                                 icon: Icons.add_rounded,
-                                                onTap: () => _updateQty(cartId, qty + 1),
+                                                onTap: () =>
+                                                    _updateQty(cartId, qty + 1),
                                                 color: AppColors.primary,
                                                 iconColor: AppColors.card,
                                               ),
                                               const SizedBox(height: 8),
                                               Text(
                                                 '$qty',
-                                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
                                                       fontSize: 16,
-                                                      fontWeight: FontWeight.w800,
-                                                      color: AppColors.textPrimary,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color:
+                                                          AppColors.textPrimary,
                                                     ),
                                               ),
                                               const SizedBox(height: 8),
                                               _CartQtyButton(
                                                 icon: Icons.remove_rounded,
-                                                onTap: () => _updateQty(cartId, qty - 1),
+                                                onTap: () =>
+                                                    _updateQty(cartId, qty - 1),
                                                 color: AppColors.borderLight,
                                                 iconColor: AppColors.grayText,
                                               ),
@@ -284,7 +327,9 @@ class _CartPageState extends State<CartPage> {
                                 decoration: BoxDecoration(
                                   color: AppColors.card,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppColors.borderLight),
+                                  border: Border.all(
+                                    color: AppColors.borderLight,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
@@ -298,7 +343,10 @@ class _CartPageState extends State<CartPage> {
                                     Expanded(
                                       child: Text(
                                         '872008',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.textPrimary,
@@ -313,12 +361,17 @@ class _CartPageState extends State<CartPage> {
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFFFF7ED),
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: const Color(0xFFFFEDD5)),
+                                        border: Border.all(
+                                          color: const Color(0xFFFFEDD5),
+                                        ),
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(
                                         'Promo terkonfirmasi',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
                                               color: const Color(0xFFC2410C),
                                               fontSize: 11,
                                               fontWeight: FontWeight.w700,
@@ -351,7 +404,9 @@ class _CartPageState extends State<CartPage> {
                           ? () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Pilih minimal satu item untuk dipesan!'),
+                                  content: Text(
+                                    'Pilih minimal satu item untuk dipesan!',
+                                  ),
                                   duration: Duration(seconds: 2),
                                 ),
                               );
@@ -359,7 +414,18 @@ class _CartPageState extends State<CartPage> {
                           : () async {
                               final DateTime now = DateTime.now();
                               final months = [
-                                'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+                                'Jan',
+                                'Feb',
+                                'Mar',
+                                'Apr',
+                                'Mei',
+                                'Jun',
+                                'Jul',
+                                'Agu',
+                                'Sep',
+                                'Okt',
+                                'Nov',
+                                'Des',
                               ];
                               final String orderTimeLabel =
                                   '${now.day} ${months[now.month - 1]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
@@ -370,8 +436,13 @@ class _CartPageState extends State<CartPage> {
                                   final FoodItem food = item['food'];
                                   final int qty = item['quantity'];
                                   final double itemSubtotal = food.price * qty;
-                                  final double itemTax = itemSubtotal * _taxRate;
-                                  final double itemTotal = itemSubtotal - _promoDiscount + _shippingCost + itemTax;
+                                  final double itemTax =
+                                      itemSubtotal * _taxRate;
+                                  final double itemTotal =
+                                      itemSubtotal -
+                                      _promoDiscount +
+                                      _shippingCost +
+                                      itemTax;
 
                                   final finalOrder = OrderHistoryItem(
                                     id: 'order-$cartId-${now.millisecondsSinceEpoch}',
@@ -388,12 +459,17 @@ class _CartPageState extends State<CartPage> {
                                     promoCode: '872008',
                                   );
 
-                                  await DatabaseHelper.instance.insertPesanan(finalOrder);
-                                  await DatabaseHelper.instance.removeFromCart(cartId);
+                                  await DatabaseHelper.instance.insertPesanan(
+                                    finalOrder,
+                                  );
+                                  await DatabaseHelper.instance.removeFromCart(
+                                    cartId,
+                                  );
                                 }
                               }
 
-                              if (context.mounted) _showSuccessSheet(context, previewOrder);
+                              if (context.mounted)
+                                _showSuccessSheet(context, previewOrder);
                             },
                       borderRadius: 16,
                       height: 56,
@@ -408,73 +484,62 @@ class _CartPageState extends State<CartPage> {
   }
 
   Widget _buildEmptyState() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: PageHeader(
-            title: 'My Cart',
-            onBack: () => AppNavigation.back(context),
-          ),
-        ),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF97316).withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.shopping_bag_outlined,
-                    color: AppColors.primary,
-                    size: 80,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Keranjang Belanja Kosong',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Wah, keranjang belanjaanmu masih kosong nih.\nYuk cari makanan lezat sekarang!',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        height: 1.5,
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: 200,
-                  child: ReusableButton(
-                    label: 'Belanja Sekarang',
-                    onPressed: () {
-                      AppNavigation.finishCheckoutGoHome(context);
-                    },
-                    borderRadius: 14,
-                    height: 48,
-                  ),
-                ),
-              ],
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF97316).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.shopping_bag_outlined,
+              color: AppColors.primary,
+              size: 80,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 24),
+          Text(
+            'Keranjang Belanja Kosong',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Wah, keranjang belanjaanmu masih kosong nih.\nYuk cari makanan lezat sekarang!',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  height: 1.5,
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: 200,
+            child: ReusableButton(
+              label: 'Belanja Sekarang',
+              onPressed: () {
+                AppNavigation.finishCheckoutGoHome(context);
+              },
+              borderRadius: 14,
+              height: 48,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Future<void> _showSuccessSheet(BuildContext parentContext, OrderHistoryItem previewOrder) {
+  Future<void> _showSuccessSheet(
+    BuildContext parentContext,
+    OrderHistoryItem previewOrder,
+  ) {
     return showModalBottomSheet<void>(
       context: parentContext,
       isDismissible: false,
@@ -511,21 +576,21 @@ class _CartPageState extends State<CartPage> {
               Text(
                 'Pesanan berhasil!',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                      color: AppColors.textPrimary,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  color: AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 'Kami menyiapkan pesanan anda\npantau pesanan anda',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      height: 1.5,
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  height: 1.5,
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 28),
               ReusableButton(

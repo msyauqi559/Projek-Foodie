@@ -304,8 +304,9 @@ class DatabaseHelper {
 
   Future<Map<String, dynamic>> registerUser(String name, String email, String password) async {
     final String cleanEmail = email.trim().toLowerCase();
-
     final Database db = await database;
+
+    // Pengecekan apakah email sudah terdaftar apa belum
     final List<Map<String, dynamic>> existingUser = await db.query(
       'tb_user',
       where: 'email = ?',
@@ -319,11 +320,12 @@ class DatabaseHelper {
       };
     }
 
+    // Memasukkan data baru atau data si user ketika registrasi 
     try {
       final id = await db.insert('tb_user', {
         'name': name.trim(),
         'email': cleanEmail,
-        'password': password,
+        'password': password, // Data dikemabangkan menggunakan hashing (SHA-256)
         'phone': '',
         'gender': 'Laki - laki',
         'address': '',

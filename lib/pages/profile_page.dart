@@ -127,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 120),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -308,7 +308,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 value: phone,
               ),
               _DetailRow(
-                icon: Icons.male_rounded,
+                icon: gender.toLowerCase().contains('perempuan') ? Icons.female_rounded : Icons.male_rounded,
                 label: 'Gender',
                 value: gender,
               ),

@@ -180,26 +180,37 @@ class _AuthPageState extends State<AuthPage> {
               padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 24),
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   const ReusableImage(
                     imagePath: AppAssets.logo,
-                    width: 260,
-                    height: 260,
+                    width: 180,
+                    height: 180,
                     fit: BoxFit.contain,
                     borderRadius: 0,
                   ),
+                  const SizedBox(height: 5),
+                  Text(
+                    isLogin ? 'Login!' : 'Registrasi!',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                  ),
                   const SizedBox(height: 10),
                   Text(
-                    isLogin ? 'Selamat Datang!' : 'Daftar akun anda Sekarang',
+                    isLogin
+                        ? 'Tolong masukkan akun anda di sini'
+                        : 'Daftarkan akun anda sekarang',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                   const SizedBox(height: 40),
 
-                  // Tab Sqitcher Login / Register
+                  // Tab Switcher Login / Registrasi
                   _AuthSwitcher(
                     isLogin: isLogin,
                     onLoginTap: () => setState(() => isLogin = true),
@@ -207,7 +218,7 @@ class _AuthPageState extends State<AuthPage> {
                   ),
                   const SizedBox(height: 46),
 
-                  // Form Input Username (Hanya muncul jika di tab Register)
+                  // Form Input Username (Hanya muncul jika di tab Register/Registrasi)
                   if (!isLogin) ...[
                     AppTextField(
                       controller: nameController,
@@ -216,8 +227,8 @@ class _AuthPageState extends State<AuthPage> {
                       borderColor: AppColors.borderLight,
                       borderRadius: AppDimensions.authFieldRadius,
                       contentPadding: const EdgeInsets.symmetric(
-                        vertical: 18,
                         horizontal: 16,
+                        vertical: 18,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -258,7 +269,7 @@ class _AuthPageState extends State<AuthPage> {
                   ),
                   const SizedBox(height: 26),
 
-                  // Pilihan Remeber Me (Login) / Sudah Punya Akun (Register)
+                  // Pilihan Remember Me (Login) / Sudah Punya Akun (Register)
                   if (isLogin)
                     Row(
                       children: [
@@ -275,7 +286,7 @@ class _AuthPageState extends State<AuthPage> {
                                   : AppColors.card,
                               borderRadius: BorderRadius.circular(7),
                               border: Border.all(
-                                color: AppColors.borderLight,
+                                color: AppColors.checkboxBorder,
                                 width: 1.5,
                               ),
                             ),
@@ -290,9 +301,9 @@ class _AuthPageState extends State<AuthPage> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Ingat Sata',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
+                          'Ingat saya',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
@@ -306,8 +317,7 @@ class _AuthPageState extends State<AuthPage> {
                         onTap: () => setState(() => isLogin = true),
                         child: Text(
                           'Sudah punya akun?',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                 color: AppColors.primary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -317,7 +327,7 @@ class _AuthPageState extends State<AuthPage> {
                     ),
                   const SizedBox(height: 30),
 
-                  // Tombol Login / Register Utama
+                  // Tombol Login / Registrasi Utama
                   ReusableButton(
                     label: isLogin ? 'Login' : 'Registrasi',
                     onPressed: _submit,
@@ -380,7 +390,7 @@ class _AuthSwitcher extends StatelessWidget {
                   ),
                 ),
 
-                // Teks Tab (Login & Register)
+                // Teks Tab (Login & Registrasi)
                 Row(
                   children: [
                     Expanded(
@@ -392,7 +402,7 @@ class _AuthSwitcher extends StatelessWidget {
                     ),
                     Expanded(
                       child: _AuthTabLabel(
-                        label: 'Register',
+                        label: 'Registrasi',
                         isActive: !isLogin,
                         onTap: onRegisterTap,
                       ),
@@ -430,10 +440,10 @@ class _AuthTabLabel extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: isActive ? AppColors.card : AppColors.dark,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+                  color: isActive ? AppColors.card : AppColors.dark,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ),
       ),

@@ -54,7 +54,13 @@ class AppNavigation {
     Navigator.pushReplacementNamed(context, AppRoutes.admin);
   }
 
-  static void onLogout(BuildContext context) {
+  static Future<void> onLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_id');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+
+    if (!context.mounted) return;
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.auth,

@@ -4,9 +4,9 @@ import 'package:path/path.dart';
 import '../models/food_item.dart';
 import '../models/order_history_item.dart';
 
-/// ============================================================================
-/// DATABASE HELPER (SQLITE) — VERSI BERSIH TANPA DATA DUMMY (DATA AWAL KOSONG)
-/// ============================================================================
+
+// DATABASE HELPER (SQLITE) 
+
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -25,7 +25,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 8, // Naik ke versi 8 untuk reset dan membersihkan seluruh data dummy
+      version: 8, 
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -42,7 +42,7 @@ class DatabaseHelper {
   }
 
   Future<void> _createDB(Database db, int version) async {
-    // ── TABEL USER (Auth + Profil Dinamis) ──
+    // Membuat tabel tb_user untuk menyimpan data autentikasi dan profil pengguna
     await db.execute('''
       CREATE TABLE tb_user (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,7 +56,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // ── TABEL MASTER: tb_menu (Katalog Menu) ──
+    // Membuat tabel tb_menu untuk katalog menu makanan
     await db.execute('''
       CREATE TABLE tb_menu (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,7 +74,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // ── TABEL TRANSAKSI: tb_pesanan (Riwayat Order) ──
+    // Membuat tabel tb_pesanan untuk mencatat riwayat transaksi pemesanan
     await db.execute('''
       CREATE TABLE tb_pesanan (
         id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,7 +96,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // ── TABEL KERANJANG: tb_cart (Keranjang Belanja) ──
+    // Membuat tabel tb_cart untuk keranjang belanja sementara pengguna
     await db.execute('''
       CREATE TABLE tb_cart (
         id       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -121,15 +121,13 @@ class DatabaseHelper {
       'email': 'admin@gmail.com',
       'password': 'admin123',
       'phone': '081234567890',
-      'gender': 'Laki - laki',
+      'gender': 'Waria',
       'address': 'Kantor Pusat Foodie',
       'photo_path': '',
     });
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // CRUD — tb_menu
-  // ════════════════════════════════════════════════════════════════════════════
+  // Operasi CRUD untuk tabel tb_menu
 
   Future<int> insertMenu(FoodItem food) async {
     final Database db = await database;
@@ -182,9 +180,7 @@ class DatabaseHelper {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // CRUD — tb_pesanan
-  // ════════════════════════════════════════════════════════════════════════════
+  // Operasi CRUD untuk tabel tb_pesanan (Transaksi Pemesanan)
 
   Future<int> insertPesanan(OrderHistoryItem order) async {
     final Database db = await database;
@@ -298,9 +294,7 @@ class DatabaseHelper {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // CRUD — tb_user (Registrasi, Login, Profil Dinamis)
-  // ════════════════════════════════════════════════════════════════════════════
+  // Operasi CRUD untuk tabel tb_user (Autentikasi & Profil)
 
   Future<Map<String, dynamic>> registerUser(String name, String email, String password) async {
     final String cleanEmail = email.trim().toLowerCase();
@@ -410,9 +404,7 @@ class DatabaseHelper {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // CRUD — tb_cart (Keranjang Belanja)
-  // ════════════════════════════════════════════════════════════════════════════
+  // Operasi CRUD untuk tabel tb_cart (Keranjang Belanja)
 
   Future<int> addToCart(int userId, int menuId, int quantity) async {
     final Database db = await database;
@@ -503,9 +495,7 @@ class DatabaseHelper {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // UTILITIES
-  // ════════════════════════════════════════════════════════════════════════════
+  // Utilitas Database Helper
 
   Future<void> close() async {
     final Database db = await database;

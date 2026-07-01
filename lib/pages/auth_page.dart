@@ -177,13 +177,13 @@ class _AuthPageState extends State<AuthPage> {
               maxWidth: Responsive.isTablet(context) ? 460 : 412,
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Column(
                 children: [
                   const SizedBox(height: 10),
                   const ReusableImage(
                     imagePath: AppAssets.logo,
-                    width: 180,
+                    width: 400,
                     height: 180,
                     fit: BoxFit.contain,
                     borderRadius: 0,
@@ -192,10 +192,10 @@ class _AuthPageState extends State<AuthPage> {
                   Text(
                     isLogin ? 'Login!' : 'Registrasi!',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                        ),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -203,10 +203,10 @@ class _AuthPageState extends State<AuthPage> {
                         ? 'Tolong masukkan akun anda di sini'
                         : 'Daftarkan akun anda sekarang',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 40),
 
@@ -302,7 +302,8 @@ class _AuthPageState extends State<AuthPage> {
                         const SizedBox(width: 8),
                         Text(
                           'Ingat saya',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -317,7 +318,8 @@ class _AuthPageState extends State<AuthPage> {
                         onTap: () => setState(() => isLogin = true),
                         child: Text(
                           'Sudah punya akun?',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
                                 color: AppColors.primary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -329,7 +331,7 @@ class _AuthPageState extends State<AuthPage> {
 
                   // Tombol Login / Registrasi Utama
                   ReusableButton(
-                    label: isLogin ? 'Login' : 'Registrasi',
+                    label: isLogin ? 'Login' : 'Registras',
                     onPressed: _submit,
                     borderRadius: AppDimensions.authButtonRadius,
                     height: 50,
@@ -440,10 +442,10 @@ class _AuthTabLabel extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: isActive ? AppColors.card : AppColors.dark,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: isActive ? AppColors.card : AppColors.dark,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),

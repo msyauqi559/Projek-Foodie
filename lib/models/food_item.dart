@@ -13,9 +13,6 @@ class FoodItem {
     required this.imagePath,
     required this.price,
     required this.rating,
-    required this.deliveryTime,
-    required this.distance,
-    required this.calories,
     required this.tags,
   });
 
@@ -29,9 +26,6 @@ class FoodItem {
   final String imagePath;
   final double price;
   final double rating;
-  final String deliveryTime;
-  final String distance;
-  final int calories;
   final List<String> tags;
 
   /// Konversi object FoodItem → Map untuk operasi INSERT/UPDATE SQLite.
@@ -48,9 +42,6 @@ class FoodItem {
       'image_path': imagePath,
       'price': price,
       'rating': rating,
-      'delivery_time': deliveryTime,
-      'distance': distance,
-      'calories': calories,
       'tags': tags.join(','),
     };
   }
@@ -70,9 +61,6 @@ class FoodItem {
       imagePath: map['image_path'] as String,
       price: (map['price'] as num).toDouble(),
       rating: (map['rating'] as num).toDouble(),
-      deliveryTime: map['delivery_time'] as String,
-      distance: map['distance'] as String,
-      calories: map['calories'] as int,
       tags: (map['tags'] as String).split(','),
     );
   }
@@ -88,9 +76,6 @@ class FoodItem {
     String? imagePath,
     double? price,
     double? rating,
-    String? deliveryTime,
-    String? distance,
-    int? calories,
     List<String>? tags,
   }) {
     return FoodItem(
@@ -103,9 +88,6 @@ class FoodItem {
       imagePath: imagePath ?? this.imagePath,
       price: price ?? this.price,
       rating: rating ?? this.rating,
-      deliveryTime: deliveryTime ?? this.deliveryTime,
-      distance: distance ?? this.distance,
-      calories: calories ?? this.calories,
       tags: tags ?? this.tags,
     );
   }

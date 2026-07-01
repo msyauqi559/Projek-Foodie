@@ -18,7 +18,7 @@ class AdminMenuFormPage extends StatefulWidget {
 
 class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _nameCtrl;
   late TextEditingController _catCtrl;
   late TextEditingController _addrCtrl;
@@ -26,7 +26,8 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
   late TextEditingController _priceCtrl;
   late TextEditingController _tagsCtrl;
   late TextEditingController _imageCtrl;
-  
+  late TextEditingController _ratingCtrl;
+
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
 
@@ -53,11 +54,15 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     final f = widget.foodToEdit;
     _nameCtrl = TextEditingController(text: f?.name ?? '');
     _catCtrl = TextEditingController(text: f?.category ?? 'Nusantara');
-    _addrCtrl = TextEditingController(text: f?.address ?? 'Jl. Diponegoro Kota Pasuruan');
+    _addrCtrl = TextEditingController(
+      text: f?.address ?? 'Jl. Diponegoro Kota Pasuruan',
+    );
     _descCtrl = TextEditingController(text: f?.description ?? '');
     _priceCtrl = TextEditingController(text: f?.price.toStringAsFixed(0) ?? '');
-    
-    _selectedTags = f?.tags.map((e) => e.trim()).where((e) => e.isNotEmpty).toList() ?? ['Favorit', 'Gurih'];
+
+    _selectedTags =
+        f?.tags.map((e) => e.trim()).where((e) => e.isNotEmpty).toList() ??
+        ['Favorit', 'Gurih'];
     for (final tag in _selectedTags) {
       if (!_availableTags.contains(tag)) {
         _availableTags.add(tag);
@@ -65,6 +70,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     }
     _tagsCtrl = TextEditingController(text: _selectedTags.join(', '));
     _imageCtrl = TextEditingController(text: f?.imagePath ?? '');
+    _ratingCtrl = TextEditingController(text: f?.rating.toString() ?? '5.0');
   }
 
   @override
@@ -76,6 +82,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
     _priceCtrl.dispose();
     _tagsCtrl.dispose();
     _imageCtrl.dispose();
+    _ratingCtrl.dispose();
     super.dispose();
   }
 
@@ -87,7 +94,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
         maxHeight: 800,
         imageQuality: 80,
       );
-      
+
       if (image != null) {
         final bytes = await image.readAsBytes();
         final base64Str = base64Encode(bytes);
@@ -97,9 +104,9 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memilih gambar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memilih gambar: $e')));
       }
     }
   }
@@ -116,18 +123,23 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Pilih Tags Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text(
+                'Pilih Tags Makanan',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView(
-                  shrinkWrap: true, // Membuat list menyesuaikan tinggi konten di dalamnya
+                  shrinkWrap:
+                      true, // Membuat list menyesuaikan tinggi konten di dalamnya
                   children: _availableTags.map((tag) {
                     final isChecked = tempSelected.contains(tag);
                     return CheckboxListTile(
                       activeColor: AppColors.primary,
                       value: isChecked,
                       title: Text(tag),
-                      controlAffinity: ListTileControlAffinity.leading, // Checklist di sebelah kiri teks
+                      controlAffinity: ListTileControlAffinity
+                          .leading, // Checklist di sebelah kiri teks
                       onChanged: (bool? checked) {
                         // Memperbarui checklist secara lokal di dalam dialog menggunakan setDialogState
                         setDialogState(() {
@@ -148,7 +160,10 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                 // Tombol Batal untuk membatalkan semua pilihan temporer
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 // Tombol Pilih untuk menyimpan pilihan temporer ke state utama dan menutup dialog
                 ElevatedButton(
@@ -179,7 +194,9 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
 
     if (_imageCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan pilih gambar makanan terlebih dahulu')),
+        const SnackBar(
+          content: Text('Silakan pilih gambar makanan terlebih dahulu'),
+        ),
       );
       return;
     }
@@ -195,10 +212,7 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
       description: _descCtrl.text,
       imagePath: _imageCtrl.text.trim(),
       price: double.parse(_priceCtrl.text),
-      rating: widget.foodToEdit?.rating ?? 5.0,
-      deliveryTime: widget.foodToEdit?.deliveryTime ?? '15 min',
-      distance: widget.foodToEdit?.distance ?? '1.2 km',
-      calories: widget.foodToEdit?.calories ?? 250,
+      rating: double.tryParse(_ratingCtrl.text) ?? 5.0,
       tags: _selectedTags,
     );
 
@@ -228,7 +242,9 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
         foregroundColor: Colors.white,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : Form(
               key: _formKey,
               child: ListView(
@@ -236,16 +252,22 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                 children: [
                   const Text(
                     'Detail Makanan',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Nama
                   TextFormField(
                     controller: _nameCtrl,
                     decoration: InputDecoration(
                       labelText: 'Nama Menu',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     validator: (v) => v!.isEmpty ? 'Nama wajib diisi' : null,
                   ),
@@ -253,13 +275,27 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
 
                   // Kategori
                   DropdownButtonFormField<String>(
-                    initialValue: ['Nusantara', 'Sehat', 'Fastfood'].contains(_catCtrl.text) ? _catCtrl.text : 'Nusantara',
+                    initialValue:
+                        [
+                          'Nusantara',
+                          'Sehat',
+                          'Fastfood',
+                        ].contains(_catCtrl.text)
+                        ? _catCtrl.text
+                        : 'Nusantara',
                     decoration: InputDecoration(
                       labelText: 'Kategori',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    items: ['Nusantara', 'Sehat', 'Fastfood'].map((String category) {
-                      return DropdownMenuItem(value: category, child: Text(category));
+                    items: ['Nusantara', 'Sehat', 'Fastfood'].map((
+                      String category,
+                    ) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      );
                     }).toList(),
                     onChanged: (val) {
                       if (val != null) _catCtrl.text = val;
@@ -274,7 +310,9 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                     decoration: InputDecoration(
                       labelText: 'Harga (Rupiah)',
                       prefixText: 'Rp. ',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     validator: (v) => v!.isEmpty ? 'Harga wajib diisi' : null,
                   ),
@@ -285,10 +323,36 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                     controller: _addrCtrl,
                     decoration: InputDecoration(
                       labelText: 'Alamat Resto/Penjual',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Rating 
+                  TextFormField(
+                    controller: _ratingCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Rating Menu (0.0 - 5.0)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) {
+                        return 'Rating Wajib diisi!';
+                      }
+                      final val = double.tryParse(v);
+                      if (val == null || val < 0.0 || val > 5.0) {
+                        return 'Masukkan angka rating antara 0.0 sampai 5.0';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
 
                   // Tags Multi-Select Dropdown
                   GestureDetector(
@@ -297,11 +361,19 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                       child: TextFormField(
                         controller: _tagsCtrl,
                         decoration: InputDecoration(
-                          labelText: 'Tags Makanan (Bisa Pilih Lebih dari Satu)',
-                          suffixIcon: const Icon(Icons.arrow_drop_down_rounded, size: 28),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          labelText:
+                              'Tags Makanan (Bisa Pilih Lebih dari Satu)',
+                          suffixIcon: const Icon(
+                            Icons.arrow_drop_down_rounded,
+                            size: 28,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                        validator: (v) => _selectedTags.isEmpty ? 'Pilih minimal satu tag' : null,
+                        validator: (v) => _selectedTags.isEmpty
+                            ? 'Pilih minimal satu tag'
+                            : null,
                       ),
                     ),
                   ),
@@ -313,7 +385,9 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                     maxLines: 3,
                     decoration: InputDecoration(
                       labelText: 'Deskripsi Lengkap',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -323,10 +397,14 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                   const SizedBox(height: 10),
                   const Text(
                     'Gambar Makanan',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Live image preview
                   Center(
                     child: Container(
@@ -346,11 +424,18 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.image_rounded, size: 40, color: Colors.grey),
+                                  Icon(
+                                    Icons.image_rounded,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
                                   SizedBox(height: 4),
                                   Text(
                                     'Belum ada gambar',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -367,25 +452,36 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Tombol Pilih Gambar
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: OutlinedButton.icon(
                       onPressed: _pickImage,
-                      icon: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+                      icon: const Icon(
+                        Icons.photo_library_rounded,
+                        color: AppColors.primary,
+                      ),
                       label: const Text(
                         'Pilih Gambar dari Galeri',
-                        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.primary, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        side: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
 
                   // Tombol Simpan
@@ -395,11 +491,17 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                       onPressed: _saveData,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: Text(
                         isEdit ? 'Simpan Perubahan' : 'Tambahkan Menu',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

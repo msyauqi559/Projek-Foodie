@@ -95,9 +95,6 @@ class OrderHistoryItem {
       imagePath: map['m_image_path'] as String,
       price: (map['m_price'] as num).toDouble(),
       rating: (map['m_rating'] as num).toDouble(),
-      deliveryTime: map['m_delivery_time'] as String,
-      distance: map['m_distance'] as String,
-      calories: map['m_calories'] as int,
       tags: (map['m_tags'] as String).split(','),
     );
 

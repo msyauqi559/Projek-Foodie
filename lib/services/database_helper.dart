@@ -4,8 +4,7 @@ import 'package:path/path.dart';
 import '../models/food_item.dart';
 import '../models/order_history_item.dart';
 
-
-// DATABASE HELPER (SQLITE) 
+/// Kelas untuk mengelola semua operasi database SQLite di aplikasi Foodie.
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -25,7 +24,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 8, 
+      version: 10, 
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -42,7 +41,7 @@ class DatabaseHelper {
   }
 
   Future<void> _createDB(Database db, int version) async {
-    // Membuat tabel tb_user untuk menyimpan data autentikasi dan profil pengguna
+    // ── TABEL USER (Auth + Profil Dinamis) ──
     await db.execute('''
       CREATE TABLE tb_user (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,7 +55,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // Membuat tabel tb_menu untuk katalog menu makanan
+    // ── TABEL MASTER: tb_menu (Katalog Menu) ──
     await db.execute('''
       CREATE TABLE tb_menu (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,14 +66,11 @@ class DatabaseHelper {
         image_path    TEXT    NOT NULL,
         price         REAL    NOT NULL,
         rating        REAL    NOT NULL,
-        delivery_time TEXT    NOT NULL,
-        distance      TEXT    NOT NULL,
-        calories      INTEGER NOT NULL,
         tags          TEXT    NOT NULL
       )
     ''');
 
-    // Membuat tabel tb_pesanan untuk mencatat riwayat transaksi pemesanan
+    // ── TABEL TRANSAKSI: tb_pesanan (Riwayat Order) ──
     await db.execute('''
       CREATE TABLE tb_pesanan (
         id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,7 +92,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // Membuat tabel tb_cart untuk keranjang belanja sementara pengguna
+    // ── TABEL KERANJANG: tb_cart (Keranjang Belanja) ──
     await db.execute('''
       CREATE TABLE tb_cart (
         id       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -127,7 +123,7 @@ class DatabaseHelper {
     });
   }
 
-  // Operasi CRUD untuk tabel tb_menu
+  // -- CRUD tb_menu --
 
   Future<int> insertMenu(FoodItem food) async {
     final Database db = await database;
@@ -180,7 +176,7 @@ class DatabaseHelper {
     );
   }
 
-  // Operasi CRUD untuk tabel tb_pesanan (Transaksi Pemesanan)
+  // -- CRUD tb_pesanan --
 
   Future<int> insertPesanan(OrderHistoryItem order) async {
     final Database db = await database;
@@ -215,9 +211,6 @@ class DatabaseHelper {
         m.image_path    AS m_image_path,
         m.price         AS m_price,
         m.rating        AS m_rating,
-        m.delivery_time AS m_delivery_time,
-        m.distance      AS m_distance,
-        m.calories      AS m_calories,
         m.tags          AS m_tags
       FROM tb_pesanan p
       INNER JOIN tb_menu m ON p.menu_id = m.id
@@ -256,9 +249,6 @@ class DatabaseHelper {
         m.image_path    AS m_image_path,
         m.price         AS m_price,
         m.rating        AS m_rating,
-        m.delivery_time AS m_delivery_time,
-        m.distance      AS m_distance,
-        m.calories      AS m_calories,
         m.tags          AS m_tags
       FROM tb_pesanan p
       INNER JOIN tb_menu m ON p.menu_id = m.id
@@ -294,7 +284,7 @@ class DatabaseHelper {
     );
   }
 
-  // Operasi CRUD untuk tabel tb_user (Autentikasi & Profil)
+  // -- CRUD tb_user (Registrasi, Login, Profil) --
 
   Future<Map<String, dynamic>> registerUser(String name, String email, String password) async {
     final String cleanEmail = email.trim().toLowerCase();
@@ -404,7 +394,7 @@ class DatabaseHelper {
     );
   }
 
-  // Operasi CRUD untuk tabel tb_cart (Keranjang Belanja)
+  // -- CRUD tb_cart --
 
   Future<int> addToCart(int userId, int menuId, int quantity) async {
     final Database db = await database;
@@ -436,8 +426,8 @@ class DatabaseHelper {
       SELECT c.id, c.user_id, c.menu_id, c.quantity,
              m.name AS m_name, m.category AS m_category, m.address AS m_address,
              m.description AS m_description, m.image_path AS m_image_path,
-             m.price AS m_price, m.rating AS m_rating, m.delivery_time AS m_delivery_time,
-             m.distance AS m_distance, m.calories AS m_calories, m.tags AS m_tags
+             m.price AS m_price, m.rating AS m_rating,
+             m.tags AS m_tags
       FROM tb_cart c
       INNER JOIN tb_menu m ON c.menu_id = m.id
       WHERE c.user_id = ?
@@ -458,9 +448,6 @@ class DatabaseHelper {
           'image_path': map['m_image_path'],
           'price': map['m_price'],
           'rating': map['m_rating'],
-          'delivery_time': map['m_delivery_time'],
-          'distance': map['m_distance'],
-          'calories': map['m_calories'],
           'tags': map['m_tags'],
         }),
       };
@@ -495,7 +482,7 @@ class DatabaseHelper {
     );
   }
 
-  // Utilitas Database Helper
+  // -- Utilities --
 
   Future<void> close() async {
     final Database db = await database;

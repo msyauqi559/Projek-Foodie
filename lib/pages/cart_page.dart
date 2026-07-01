@@ -159,9 +159,6 @@ class _CartPageState extends State<CartPage> {
       imagePath: '',
       price: mockPrice,
       rating: 0,
-      deliveryTime: '',
-      distance: '',
-      calories: 0,
       tags: [],
     );
 
@@ -468,8 +465,9 @@ class _CartPageState extends State<CartPage> {
                                 }
                               }
 
-                              if (context.mounted)
+                              if (context.mounted) {
                                 _showSuccessSheet(context, previewOrder);
+                              }
                             },
                       borderRadius: 16,
                       height: 56,

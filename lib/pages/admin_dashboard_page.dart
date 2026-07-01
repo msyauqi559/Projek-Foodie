@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/app_assets.dart';
 import '../constants/app_colors.dart';
 import '../models/food_item.dart';
 import '../models/order_history_item.dart';
@@ -109,7 +108,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             IconButton(
               icon: const Icon(Icons.logout_rounded),
               tooltip: 'Logout',
-              onPressed: () => _ShowLogoutDialog(context),
+              onPressed: () => _showLogoutConfirmation(context),
             ),
           ],
           bottom: const TabBar(
@@ -673,7 +672,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
-  Future<void> _ShowLogoutDialog(BuildContext parentContext) {
+  Future<void> _showLogoutConfirmation(BuildContext parentContext) {
     return showModalBottomSheet<void>(
       context: parentContext,
       backgroundColor: Colors.transparent,

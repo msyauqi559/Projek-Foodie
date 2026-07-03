@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../models/food_item.dart';
 import '../models/order_history_item.dart';
@@ -105,6 +106,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           foregroundColor: Colors.white,
           elevation: 2,
           actions: [
+            IconButton(
+              icon: const Icon(Icons.discount_rounded),
+              tooltip: 'Atur Promo',
+              onPressed: () => _showSetPromoDialog(context),
+            ),
             IconButton(
               icon: const Icon(Icons.logout_rounded),
               tooltip: 'Logout',
@@ -751,6 +757,68 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _showSetPromoDialog(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentPromo = prefs.getString('active_promo_code') ?? '872008';
+    final currentDiscount = prefs.getDouble('active_promo_discount') ?? 2000.0;
+
+    final codeCTRL = TextEditingController(text: currentPromo);
+    final discountCTRL = TextEditingController(
+      text: currentDiscount.toStringAsFixed(0),
+    );
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Atur Kode Promo Aktif'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: codeCTRL,
+              decoration: const InputDecoration(
+                labelText: 'Kode Promo (misal: MAKANHEMAT)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: discountCTRL,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Nominal Diskon (Rupiah)',
+                prefixText: 'Rp. ',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final newCode = codeCTRL.text.trim().toUpperCase();
+              final newDiscount =
+                  double.tryParse(discountCTRL.text.trim()) ?? 0.0;
+
+              await prefs.setString('active_promo_code', newCode);
+              await prefs.setDouble('active_promo_discount', newDiscount);
+
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Kode Promo berhasil diperbarui!'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
     );
   }
 }

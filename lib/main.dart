@@ -7,16 +7,10 @@ import 'constants/app_typography.dart';
 import 'services/app_router.dart';
 import 'services/database_helper.dart';
 
-/// Entry point aplikasi — menginisialisasi database sebelum 
-///
-/// [WidgetsFlutterBinding.ensureInitialized()] WAJIB dipanggil sebelum
-/// operasi async (seperti buka database) di dalam main().
-/// Tanpa ini, Flutter belum siap menerima perintah platform-level.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi database SQLite jika di platform native mobile (Android/iOS)
-  bool isMobile = false;
+  bool isMobile = false; 
   if (!kIsWeb) {
     try {
       isMobile = Platform.isAndroid || Platform.isIOS;

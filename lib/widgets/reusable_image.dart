@@ -25,10 +25,11 @@ class ReusableImage extends StatelessWidget {
   final String? heroTag;
   final Alignment alignment;
 
+  static final Map<String, Uint8List> _base64Cache = {};
+
   bool _isBase64(String str) {
     if (str.startsWith('data:image')) return true;
     if (str.length < 50) return false;
-    // Cek pattern base64 dasar
     final RegExp base64RegExp = RegExp(r'^[a-zA-Z0-9+/=\s\n\r]*$');
     return base64RegExp.hasMatch(str);
   }
@@ -42,26 +43,35 @@ class ReusableImage extends StatelessWidget {
     );
   }
 
+  Uint8List _getDecodedBytes(String path) {
+    if (_base64Cache.containsKey(path)) {
+      return _base64Cache[path]!;
+    }
+    String cleanBase64 = path;
+    if (path.startsWith('data:image')) {
+      final parts = path.split(',');
+      if (parts.length > 1) {
+        cleanBase64 = parts[1];
+      }
+    }
+    cleanBase64 = cleanBase64.replaceAll(RegExp(r'\s+'), '');
+    final Uint8List decoded = base64Decode(cleanBase64);
+    _base64Cache[path] = decoded;
+    return decoded;
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget imageWidget;
 
     if (_isBase64(imagePath)) {
       try {
-        String cleanBase64 = imagePath;
-        if (imagePath.startsWith('data:image')) {
-          final parts = imagePath.split(',');
-          if (parts.length > 1) {
-            cleanBase64 = parts[1];
-          }
-        }
-        // Bersihkan whitespace/newline yang mungkin terbawa dari encoding
-        cleanBase64 = cleanBase64.replaceAll(RegExp(r'\s+'), '');
-        final Uint8List decodedBytes = base64Decode(cleanBase64);
+        final Uint8List decodedBytes = _getDecodedBytes(imagePath);
         imageWidget = Image.memory(
           decodedBytes,
           fit: fit,
           alignment: alignment,
+          gaplessPlayback: true,
           errorBuilder: (_, error, stackTrace) => _buildErrorIcon(),
         );
       } catch (_) {
@@ -72,6 +82,7 @@ class ReusableImage extends StatelessWidget {
         imagePath,
         fit: fit,
         alignment: alignment,
+        gaplessPlayback: true,
         errorBuilder: (_, error, stackTrace) => _buildErrorIcon(),
       );
     } else {
@@ -79,6 +90,7 @@ class ReusableImage extends StatelessWidget {
         imagePath,
         fit: fit,
         alignment: alignment,
+        gaplessPlayback: true,
         errorBuilder: (_, error, stackTrace) => _buildErrorIcon(),
       );
     }

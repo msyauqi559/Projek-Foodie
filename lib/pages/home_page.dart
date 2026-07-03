@@ -16,15 +16,7 @@ import '../widgets/cart_button.dart';
 import '../widgets/reusable_image.dart';
 import '../widgets/section_header.dart';
 
-/// HomePage — Halaman utama aplikasi Foodie.
-///
-/// Sekarang mengambil data menu dari **SQLite** via [DatabaseHelper],
-/// bukan lagi dari DummyDataService.
-///
-/// Menggunakan [StatefulWidget] + [FutureBuilder] untuk:
-/// 1. Memanggil [DatabaseHelper.instance.getAllMenus()] saat halaman dimuat
-/// 2. Menampilkan loading indicator saat data belum siap
-/// 3. Menampilkan data menu saat sudah tersedia
+// Halaman Utama Foodie (PreMini)
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -33,25 +25,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Menampung Future untuk memuat daftar menu secara asinkron dari SQLite
   late Future<List<FoodItem>> _menusFuture;
-
-  // Controller untuk mendeteksi input teks pencarian menu
   final TextEditingController _searchCtrl = TextEditingController();
-  
-  // Menyimpan string pencarian aktif saat ini
   String _searchQuery = '';
-  
-  // Kategori filter aktif saat ini (default: 'Semua')
   String _selectedCategory = 'Semua';
-
-  // Cache lokal untuk menyimpan daftar menu mentah guna mendeteksi perubahan data
   List<FoodItem>? _cachedAllMenus;
-  
-  // Menyimpan 3 menu rekomendasi acak (highlight) yang di-cache agar tidak di-shuffle terus-menerus
   List<FoodItem> _highlightMenus = [];
-  
-  // Menyimpan menu Salad yang digunakan untuk promo banner
   FoodItem? _promoFood;
 
   @override

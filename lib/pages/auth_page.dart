@@ -77,9 +77,11 @@ class _AuthPageState extends State<AuthPage> {
 
   // Menampilkan pesan pop-up singkat di bawah layar
   void _showMessage(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.textPrimary,
       ),
@@ -103,7 +105,7 @@ class _AuthPageState extends State<AuthPage> {
       return;
     }
 
-    // 2. Login Khusu Admin
+    // 2. Login Khusus Admin
     if (email == 'admin@gmail.com' && password == 'admin123') {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('user_id', -1);
@@ -171,6 +173,7 @@ class _AuthPageState extends State<AuthPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
+        // SafeArea buat agar tidak tertutup status bar atau navigasi bar bawah
         child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
@@ -322,7 +325,7 @@ class _AuthPageState extends State<AuthPage> {
                               ?.copyWith(
                                 color: AppColors.primary,
                                 fontSize: 14,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                               ),
                         ),
                       ),
@@ -331,7 +334,7 @@ class _AuthPageState extends State<AuthPage> {
 
                   // Tombol Login / Registrasi Utama
                   ReusableButton(
-                    label: isLogin ? 'Login' : 'Registras',
+                    label: isLogin ? 'Login' : 'Registrasi',
                     onPressed: _submit,
                     borderRadius: AppDimensions.authButtonRadius,
                     height: 50,

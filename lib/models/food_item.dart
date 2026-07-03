@@ -1,7 +1,4 @@
-/// Model data menu makanan — digunakan sebagai struktur data untuk tabel `tb_menu`.
-///
-/// [dbId] = ID dari database SQLite (nullable karena auto-increment).
-/// [id]   = ID string untuk keperluan UI (hero tag, routing).
+// Model data menu makanan untuk tabel tb_menu.
 class FoodItem {
   const FoodItem({
     this.dbId,
@@ -16,7 +13,7 @@ class FoodItem {
     required this.tags,
   });
 
-  /// ID dari SQLite (auto-increment). Null saat belum disimpan ke DB.
+  // ID auto-increment SQLite.
   final int? dbId;
   final String id;
   final String name;
@@ -28,11 +25,7 @@ class FoodItem {
   final double rating;
   final List<String> tags;
 
-  /// Konversi object FoodItem → Map untuk operasi INSERT/UPDATE SQLite.
-  ///
-  /// Catatan: [id] (String) tidak disimpan ke DB karena kita pakai
-  /// auto-increment [dbId] sebagai primary key.
-  /// [tags] disimpan sebagai String dipisah koma ('Favorite,Gurih,Fresh').
+  // Konversi objek ke Map untuk SQLite.
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -46,10 +39,7 @@ class FoodItem {
     };
   }
 
-  /// Factory: konversi Map dari SQLite → FoodItem object.
-  ///
-  /// [map['id']] = integer dari kolom `id` SQLite.
-  /// [map['tags']] = string koma-separated, dipecah jadi `List<String>`.
+  // Konversi Map SQLite ke objek FoodItem.
   factory FoodItem.fromMap(Map<String, dynamic> map) {
     return FoodItem(
       dbId: map['id'] as int,
@@ -65,7 +55,7 @@ class FoodItem {
     );
   }
 
-  /// Buat salinan FoodItem dengan field tertentu diubah.
+  // Salin objek dengan beberapa perubahan field.
   FoodItem copyWith({
     int? dbId,
     String? id,

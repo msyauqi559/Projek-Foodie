@@ -5,23 +5,10 @@ import '../models/food_item.dart';
 import '../models/order_history_item.dart';
 import 'app_router.dart';
 
-/// Alur aplikasi (sesuai desain Figma):
-///
-/// Splash → Auth (Login / Registrasi) → Shell (Home | Categories | History | About)
-///
-/// Dari Home / Categories:
-///   → Detail produk → My Cart → [sukses] → Shell (Home) atau Lacak (Tracking)
-///
-/// Dari History:
-///   → Detail pembayaran (order detail)
-///
-/// Dari About (Profile):
-///   → Logout → Auth
 class AppNavigation {
   const AppNavigation._();
 
   // ——— Splash & Auth ———
-
   static Future<void> finishSplash(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final int? userId = prefs.getInt('user_id');

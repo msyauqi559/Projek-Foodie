@@ -22,7 +22,7 @@ class _SplashPageState extends State<SplashPage> {
     super.initState();
     
     // Start fade-in animation after a small delay
-    Future.delayed(const Duration(milliseconds: 200), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
           _opacity = 1.0;
@@ -30,7 +30,7 @@ class _SplashPageState extends State<SplashPage> {
       }
     });
 
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 2), () {
       if (!mounted) {
         return;
       }

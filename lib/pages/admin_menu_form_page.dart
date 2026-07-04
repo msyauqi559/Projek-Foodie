@@ -203,27 +203,48 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
 
     setState(() => _isLoading = true);
 
-    final food = FoodItem(
-      dbId: widget.foodToEdit?.dbId,
-      id: widget.foodToEdit?.id ?? 'menu-baru',
-      name: _nameCtrl.text,
-      category: _catCtrl.text,
-      address: _addrCtrl.text,
-      description: _descCtrl.text,
-      imagePath: _imageCtrl.text.trim(),
-      price: double.parse(_priceCtrl.text),
-      rating: double.tryParse(_ratingCtrl.text) ?? 5.0,
-      tags: _selectedTags,
-    );
+    try {
+      final String cleanPriceText = _priceCtrl.text
+          .replaceAll('.', '')
+          .replaceAll(',', '');
+      final double? parsedPrice = double.tryParse(cleanPriceText);
+      if (parsedPrice == null) {
+        throw const FormatException(
+          'Format harga tidak valid. Masukkan angka saja.',
+        );
+      }
+      final food = FoodItem(
+        dbId: widget.foodToEdit?.dbId,
+        id: widget.foodToEdit?.id ?? 'menu-baru',
+        name: _nameCtrl.text,
+        category: _catCtrl.text,
+        address: _addrCtrl.text,
+        description: _descCtrl.text,
+        imagePath: _imageCtrl.text.trim(),
+        price: parsedPrice,
+        rating: double.tryParse(_ratingCtrl.text) ?? 5.0,
+        tags: _selectedTags,
+      );
 
-    if (widget.foodToEdit == null) {
-      await DatabaseHelper.instance.insertMenu(food);
-    } else {
-      await DatabaseHelper.instance.updateMenu(food);
-    }
+      if (widget.foodToEdit == null) {
+        await DatabaseHelper.instance.insertMenu(food);
+      } else {
+        await DatabaseHelper.instance.updateMenu(food);
+      }
 
-    if (mounted) {
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan menu: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
     }
   }
 
@@ -330,10 +351,12 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Rating 
+                  // Rating
                   TextFormField(
                     controller: _ratingCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Rating Menu (0.0 - 5.0)',
                       border: OutlineInputBorder(
@@ -352,7 +375,6 @@ class _AdminMenuFormPageState extends State<AdminMenuFormPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-
 
                   // Tags Multi-Select Dropdown
                   GestureDetector(

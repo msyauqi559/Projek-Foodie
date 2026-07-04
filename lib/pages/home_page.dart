@@ -38,7 +38,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // Memulai pemuatan data dari SQLite saat widget pertama kali dibuat
     _loadMenus();
-    
+
     // Menambahkan listener untuk memperbarui state pencarian ketika user mengetik
     _searchCtrl.addListener(() {
       setState(() {
@@ -62,7 +62,8 @@ class _HomePageState extends State<HomePage> {
   // Dipanggil setelah admin menambah/mengedit/menghapus menu untuk me-refresh data
   void refreshData() {
     setState(() {
-      _cachedAllMenus = null; // Menghapus cache agar data diacak dan dihitung ulang
+      _cachedAllMenus =
+          null; // Menghapus cache agar data diacak dan dihitung ulang
       _loadMenus();
     });
   }
@@ -91,9 +92,10 @@ class _HomePageState extends State<HomePage> {
         // Menyaring (filter) menu berdasarkan kategori terpilih dan kata kunci pencarian
         final List<FoodItem> filteredMenus = allMenus.where((menu) {
           final query = _searchQuery.toLowerCase();
-          final matchesQuery = menu.name.toLowerCase().contains(query) ||
+          final matchesQuery =
+              menu.name.toLowerCase().contains(query) ||
               menu.category.toLowerCase().contains(query);
-          
+
           if (_selectedCategory == 'Semua') {
             return matchesQuery;
           } else {
@@ -130,7 +132,9 @@ class _HomePageState extends State<HomePage> {
                   prefixIcon: Icons.search_rounded,
                   borderColor: AppColors.primary,
                   borderRadius: AppDimensions.homeSearchRadius,
-                  suffixIcon: _searchQuery.isNotEmpty ? Icons.clear_rounded : null,
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? Icons.clear_rounded
+                      : null,
                   onSuffixTap: () {
                     _searchCtrl.clear();
                   },
@@ -192,12 +196,17 @@ class _HomePageState extends State<HomePage> {
         // OPTIMASI PERFORMA:
         // Cek jika data menu baru selesai diload atau berubah dari database, baru kita proses ulang list-nya.
         // Ini untuk mencegah pemanggilan .shuffle() dan pengacakan widget berulang-ulang saat user mengetik di search bar.
-        if (_cachedAllMenus == null || _cachedAllMenus!.length != allMenus.length) {
+        if (_cachedAllMenus == null ||
+            _cachedAllMenus!.length != allMenus.length) {
           _cachedAllMenus = allMenus;
           // Mengambil 3 menu secara acak sekali saja untuk dijadikan highlight hari ini
-          _highlightMenus = (List<FoodItem>.from(allMenus)..shuffle()).take(3).toList();
+          _highlightMenus = (List<FoodItem>.from(
+            allMenus,
+          )..shuffle()).take(3).toList();
           // Mencari makanan yang mengandung kata 'salad' untuk dipromosikan di banner
-          _promoFood = allMenus.where((m) => m.name.toLowerCase().contains('salad')).firstOrNull;
+          _promoFood = allMenus
+              .where((m) => m.name.toLowerCase().contains('salad'))
+              .firstOrNull;
         }
 
         // Mengurutkan daftar menu populer berdasarkan rating tertinggi
@@ -214,7 +223,8 @@ class _HomePageState extends State<HomePage> {
         final FoodItem? promoFood = _promoFood;
 
         return FigmaPageBody(
-          hasBottomNavBar: true, // Menambahkan padding bawah agar tidak tertutup bottom nav melayang
+          hasBottomNavBar:
+              true, // Menambahkan padding bawah agar tidak tertutup bottom nav melayang
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -240,7 +250,9 @@ class _HomePageState extends State<HomePage> {
                 prefixIcon: Icons.search_rounded,
                 borderColor: AppColors.primary,
                 borderRadius: AppDimensions.homeSearchRadius,
-                suffixIcon: _searchQuery.isNotEmpty ? Icons.clear_rounded : null,
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? Icons.clear_rounded
+                    : null,
                 onSuffixTap: () {
                   _searchCtrl.clear();
                 },
@@ -277,10 +289,16 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.search_off_rounded, size: 64, color: Colors.grey),
+                        const Icon(
+                          Icons.search_off_rounded,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 12),
                         Text(
-                          _searchQuery.isNotEmpty ? 'Menu tidak ditemukan' : 'Kategori kosong',
+                          _searchQuery.isNotEmpty
+                              ? 'Menu tidak ditemukan'
+                              : 'Kategori kosong',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -292,7 +310,10 @@ class _HomePageState extends State<HomePage> {
                           _searchQuery.isNotEmpty
                               ? 'Coba cari menu atau kategori makanan lainnya.'
                               : 'Saat ini belum ada menu di kategori ini.',
-                          style: const TextStyle(fontSize: 13, color: AppColors.grayText),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.grayText,
+                          ),
                         ),
                       ],
                     ),
@@ -314,108 +335,113 @@ class _HomePageState extends State<HomePage> {
                 _QuickStatsRow(menuCount: filteredMenus.length),
                 const SizedBox(height: AppSpacing.lg),
 
-              // ── Divider ──
-              Container(
-                width: double.infinity,
-                height: 1,
-                color: AppColors.divider,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section: Menu Populer (Horizontal Scroll) ──
-              const SectionHeader(title: '🔥 Menu Populer'),
-              const SizedBox(height: AppSpacing.sm),
-              SizedBox(
-                height: 225,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.zero,
-                  itemCount: popularMenus.length > 5 ? 5 : popularMenus.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(width: AppSpacing.sm),
-                  itemBuilder: (context, index) {
-                    final food = popularMenus[index];
-                    return _PopularMenuCard(
-                      food: food,
-                      onTap: () async {
-                        await AppNavigation.openFoodDetail(context, food);
-                        setState(() {});
-                      },
-                    );
-                  },
+                // ── Divider ──
+                Container(
+                  width: double.infinity,
+                  height: 1,
+                  color: AppColors.divider,
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── Section: Highlights dengan detail cards ──
-              const SectionHeader(title: '⭐ Pilihan Hari Ini'),
-              const SizedBox(height: AppSpacing.sm),
-              ...List.generate(
-                highlightMenus.length,
-                (index) => Padding(
-                  padding: EdgeInsets.only(
-                    bottom: index == highlightMenus.length - 1
-                        ? 0
-                        : AppSpacing.md,
-                  ),
-                  child: _HighlightFoodCard(
-                    food: highlightMenus[index],
-                    rank: index + 1,
-                    onDetailTap: () async {
-                      await AppNavigation.openFoodDetail(
-                        context,
-                        highlightMenus[index],
+                // ── Section: Menu Populer (Horizontal Scroll) ──
+                const SectionHeader(title: '🔥 Menu Populer'),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  height: 225,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.zero,
+                    itemCount: popularMenus.length > 5
+                        ? 5
+                        : popularMenus.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: AppSpacing.sm),
+                    itemBuilder: (context, index) {
+                      final food = popularMenus[index];
+                      return _PopularMenuCard(
+                        food: food,
+                        onTap: () async {
+                          await AppNavigation.openFoodDetail(context, food);
+                          setState(() {});
+                        },
                       );
-                      setState(() {});
                     },
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.xl),
 
-              // ── Section: Per Kategori ──
-              ...grouped.entries.map((entry) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _CategoryHeader(
-                        category: entry.key,
-                        count: entry.value.length,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      SizedBox(
-                        height: 130,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: EdgeInsets.zero,
-                          itemCount: entry.value.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(width: AppSpacing.sm),
-                          itemBuilder: (context, i) {
-                            final food = entry.value[i];
-                            return _MiniMenuCard(
-                              food: food,
-                              onTap: () async {
-                                await AppNavigation.openFoodDetail(context, food);
-                                setState(() {});
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                // ── Section: Highlights dengan detail cards ──
+                const SectionHeader(title: '⭐ Pilihan Hari Ini'),
+                const SizedBox(height: AppSpacing.sm),
+                ...List.generate(
+                  highlightMenus.length,
+                  (index) => Padding(
+                    padding: EdgeInsets.only(
+                      bottom: index == highlightMenus.length - 1
+                          ? 0
+                          : AppSpacing.md,
+                    ),
+                    child: _HighlightFoodCard(
+                      food: highlightMenus[index],
+                      rank: index + 1,
+                      onDetailTap: () async {
+                        await AppNavigation.openFoodDetail(
+                          context,
+                          highlightMenus[index],
+                        );
+                        setState(() {});
+                      },
+                    ),
                   ),
-                );
-              }),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+
+                // ── Section: Per Kategori ──
+                ...grouped.entries.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _CategoryHeader(
+                          category: entry.key,
+                          count: entry.value.length,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        SizedBox(
+                          height: 130,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: EdgeInsets.zero,
+                            itemCount: entry.value.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: AppSpacing.sm),
+                            itemBuilder: (context, i) {
+                              final food = entry.value[i];
+                              return _MiniMenuCard(
+                                food: food,
+                                onTap: () async {
+                                  await AppNavigation.openFoodDetail(
+                                    context,
+                                    food,
+                                  );
+                                  setState(() {});
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
             ],
-          ],
-        ),
-      );
-    },
-  );
-}
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildCategoryChip(String categoryName, IconData icon) {
     final isSelected = _selectedCategory == categoryName;
@@ -432,7 +458,9 @@ class _HomePageState extends State<HomePage> {
           color: isSelected ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.borderLight.withValues(alpha: 0.8),
+            color: isSelected
+                ? AppColors.primary
+                : AppColors.borderLight.withValues(alpha: 0.8),
             width: 1.5,
           ),
           boxShadow: isSelected
@@ -575,7 +603,9 @@ class _PopularMenuCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.8)),
+          border: Border.all(
+            color: AppColors.borderLight.withValues(alpha: 0.8),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -1008,11 +1038,13 @@ class _MiniMenuCard extends StatelessWidget {
                         const SizedBox(width: 2),
                         Text(
                           food.rating.toStringAsFixed(1),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontSize: 10,
-                            color: AppColors.grayText,
-                          ),
-                        ),                      ],
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontSize: 10,
+                                color: AppColors.grayText,
+                              ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1127,7 +1159,9 @@ class _PromoBanner extends StatelessWidget {
                               backgroundColor: AppColors.primary,
                               foregroundColor: AppColors.card,
                               elevation: 4,
-                              shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                              shadowColor: AppColors.primary.withValues(
+                                alpha: 0.4,
+                              ),
                               padding: EdgeInsets.zero,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),

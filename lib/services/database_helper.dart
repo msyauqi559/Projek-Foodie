@@ -24,14 +24,14 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 10, 
+      version: 12, 
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 8) {
+    if (oldVersion < newVersion) {
       await db.execute('DROP TABLE IF EXISTS tb_cart');
       await db.execute('DROP TABLE IF EXISTS tb_user');
       await db.execute('DROP TABLE IF EXISTS tb_pesanan');

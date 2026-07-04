@@ -38,7 +38,6 @@ class FoodItem {
       'tags': tags.join(','),
     };
   }
-
   // Konversi Map SQLite ke objek FoodItem.
   factory FoodItem.fromMap(Map<String, dynamic> map) {
     return FoodItem(

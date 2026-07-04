@@ -64,6 +64,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Hapus Pesanan'),
         content: const Text(
           'Yakin ingin menghapus riwayat transaksi ini dari database?',
@@ -294,7 +295,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Column(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         IconButton(
@@ -318,7 +319,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                             _loadMenus(); // Refresh setelah edit
                           },
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(width: 5),
                         IconButton(
                           style: IconButton.styleFrom(
                             backgroundColor: Colors.red.shade50,
@@ -354,9 +355,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: const Text(
             'Update Status Pesanan',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.w600),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,

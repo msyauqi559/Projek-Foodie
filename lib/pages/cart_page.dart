@@ -579,13 +579,15 @@ class _CartPageState extends State<CartPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 60),
-          Text(
-            'My Cart',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+          const SizedBox(height: 20),
+          Center(
+            child: Text(
+              'My Cart',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           SizedBox(

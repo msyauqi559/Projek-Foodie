@@ -25,6 +25,8 @@ class _AuthPageState extends State<AuthPage> {
   bool isLogin = true;
   bool isPasswordHidden = true;
   bool rememberMe = false;
+  String textAuth = 'Masuk';
+  String textAuth2 = 'Daftar';
 
   // 2. Controller untuk mengambil input form dari user
   final TextEditingController nameController = TextEditingController();
@@ -193,7 +195,7 @@ class _AuthPageState extends State<AuthPage> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    isLogin ? 'Login!' : 'Registrasi!',
+                    isLogin ? textAuth : textAuth,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -216,8 +218,8 @@ class _AuthPageState extends State<AuthPage> {
                   // Tab Switcher Login / Registrasi
                   _AuthSwitcher(
                     isLogin: isLogin,
-                    onLoginTap: () => setState(() => isLogin = true),
-                    onRegisterTap: () => setState(() => isLogin = false),
+                    onLoginTap: () => setState(() {isLogin = true;}),
+                    onRegisterTap: () => setState(() {isLogin = false;}),
                   ),
                   const SizedBox(height: 46),
 
